@@ -1,7 +1,6 @@
 :- module(search,
         [ search_depth_first/3
         , search_breadth_first/3
-        , makepair/3
         ]).
 :- use_module(library(pairs)).
 :- use_module(library(lambda)).
@@ -31,10 +30,24 @@ search_depth_first(Agenda, Goal, Visited, Path) :-
     update_agenda(AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
     search_depth_first(NewAgenda, Goal, UpdatedVisited, Path).
 
+
+search_breadth_first(p(X, Y), Goal, Path) :-
+    search_breadth_first([p(X, Y)-[]], Goal, [p(X, Y)], Path).
+search_breadth_first([Current-PathToGoalReversed|_], Goal, _, Path) :-
+    call(Goal, Current),
+    !,
+    reverse([Current|PathToGoalReversed], Path).
+search_breadth_first(Agenda, Goal, Visited, Path) :-
+    select(Current-PathToCurrentReversed, Agenda, AgendaTail),
+    UpdatedVisited = [Current|Visited],
+    children(Current, ChildrenOfCurrent),
+    update_agenda_bfs(AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    search_breadth_first(NewAgenda, Goal, UpdatedVisited, Path).
+
 update_agenda(Agenda, _, [], _, Agenda).
 update_agenda(Agenda, Visited, [Child|ChildrenTail], Path, [Child-Path|NewAgenda]) :-
     pairs_keys(Agenda, NodesOnAgenda),
-    \+ member(Child, NodesOnAgenda), 
+    \+ member(Child, NodesOnAgenda),
     \+ member(Child, Visited),
     update_agenda(Agenda, Visited, ChildrenTail, Path, NewAgenda).
 update_agenda(Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
@@ -43,24 +56,18 @@ update_agenda(Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
      member(Child, Visited)),
     update_agenda(Agenda, Visited, ChildrenTail, Path, NewAgenda).
 
-
-
-makepair(First, Second, Pair) :-
-    Pair = First-Second.
-
-search_breadth_first(Agenda, Goal, Path) :-
-    search_breadth_first(Agenda, Goal, [], Path).
-search_breadth_first([Goal|_Rest], Goal, ReversedPathToGoal, Path) :-
-    reverse([Goal|ReversedPathToGoal], Path),
-    !.
-search_breadth_first(Agenda, Goal, ReversedPathToCurrent, Path) :-
-    select(Current, Agenda, Rest),
-    children(Current, Children),
-    subtract(Children, ReversedPathToCurrent, ChildrenNotOnPath),
-    union(Rest, ChildrenNotOnPath, NewAgenda),
-    search_breadth_first(NewAgenda, Goal, [Current|ReversedPathToCurrent], Path).
-
-
+update_agenda_bfs(Agenda, _, [], _, Agenda).
+update_agenda_bfs(Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
+    pairs_keys(Agenda, NodesOnAgenda),
+    \+ member(Child, NodesOnAgenda),
+    \+ member(Child, Visited),
+    update_agenda_bfs(Agenda, Visited, ChildrenTail, Path, NewPartialAgenda),
+    append(NewPartialAgenda, [Child-Path], NewAgenda).
+update_agenda_bfs(Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
+    pairs_keys(Agenda, NodesOnAgenda),
+    (member(Child, NodesOnAgenda);
+     member(Child, Visited)),
+    update_agenda_bfs(Agenda, Visited, ChildrenTail, Path, NewAgenda).
 
 % Heuristic search
 % ----------------

@@ -39,6 +39,9 @@ search_depth_first(Path) :-
     search_start(Start),
     search_depth_first(Start, goal, Path).
 
+search_breadth_first(Path) :-
+    search_start(Start),
+    search_breadth_first(Start, goal, Path).
 
 %--------------------------------------
 % Tests
@@ -66,4 +69,27 @@ test(search_depth_first_last_element_of_path_is_goal,
 
 :- end_tests(search_depth_first).
 
+
+:- begin_tests(search_breadth_first).
+
+test(search_breadth_first_finds_at_least_one_path) :-
+    findall(Path, search_breadth_first(Path), Paths),
+    length(Paths, PathCount),
+    assertion(PathCount >= 1).
+
+test(search_breadth_first_all_paths_valid,
+     [forall(search_breadth_first(Path)), nondet]) :-
+    valid_path(Path).
+
+test(search_breadth_first_goal_not_visited_more_than_once,
+     [forall(search_breadth_first(Path)), nondet]) :-
+    goal_not_visited_more_than_once(Path).
+
+test(search_breadth_first_last_element_of_path_is_goal,
+     [forall(search_breadth_first(Path)), nondet]) :-
+    goal_not_visited_more_than_once(Path),
+    last(Path, Last),
+    goal(Last).
+
+:- end_tests(search_breadth_first).
 % vim: set ft=prolog:
