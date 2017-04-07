@@ -18,7 +18,7 @@ grid_size(3, 3).
 % (i.e. is the new node closer to the goal?)
 goal(X) :- X = p(3,2).
 search_depth_first(p(X, Y), Goal, Path) :-
-    search_depth_first([p(X, Y)-[]], Goal, [p(X, Y)], Path).
+    search_depth_first([p(X, Y)-[]], Goal, [], Path).
 search_depth_first([Current-PathToGoalReversed|_], Goal, _, Path) :-
     call(Goal, Current),
     !,
@@ -32,7 +32,7 @@ search_depth_first(Agenda, Goal, Visited, Path) :-
 
 
 search_breadth_first(p(X, Y), Goal, Path) :-
-    search_breadth_first([p(X, Y)-[]], Goal, [p(X, Y)], Path).
+    search_breadth_first([p(X, Y)-[]], Goal, [], Path).
 search_breadth_first([Current-PathToGoalReversed|_], Goal, _, Path) :-
     call(Goal, Current),
     !,
