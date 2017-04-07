@@ -4,7 +4,7 @@
 
 
 search_start(p(1,1)).
-goal(P) :- 
+goal(P) :-
     P = p(3, 2).
 
 
@@ -35,57 +35,35 @@ goal_not_visited_more_than_once(Path) :-
     length(GoalOccurences, GoalOccurenceCount),
     assertion(GoalOccurenceCount =:= 1).
 
-count(Element, List, Count) :-
-    count(Element, List, 0, Count).
-
-count(_, [], Count, Count).
-count(Element, [Element|Tail], CurrentCount, AccCount) :-
-    !,
-    NewCount is CurrentCount + 1,
-    count(Element, Tail, NewCount, AccCount).
-count(Element, [_|Tail], CurrentCount, AccCount) :-
-    count(Element, Tail, CurrentCount, AccCount).
-
-
-search_depth_first(Paths) :-
+search_depth_first(Path) :-
     search_start(Start),
-    findall(Path, search_depth_first(Start, goal, Path), Paths).
+    search_depth_first(Start, goal, Path).
 
-search_breadth_first(Paths) :-
-    search_start(Start),
-    findall(Path, search_breadth_first(Start, goal, Path), Paths).
 
 %--------------------------------------
 % Tests
 %--------------------------------------
-:- begin_tests(search).
+:- begin_tests(search_depth_first).
 
 test(search_depth_first_finds_at_least_one_path) :-
-    search_depth_first(Paths),
+    findall(Path, search_depth_first(Path), Paths),
     length(Paths, PathCount),
     assertion(PathCount >= 1).
 
-test(search_depth_first_all_paths_valid) :-
-    search_depth_first(Paths),
-    maplist(valid_path, Paths).
+test(search_depth_first_all_paths_valid,
+     [forall(search_depth_first(Path)), nondet]) :-
+    valid_path(Path).
 
-test(search_depth_first_goal_not_visited_more_than_once) :-
-    search_depth_first(Paths),
-    maplist(goal_not_visited_more_than_once, Paths).
+test(search_depth_first_goal_not_visited_more_than_once,
+     [forall(search_depth_first(Path)), nondet]) :-
+    goal_not_visited_more_than_once(Path).
 
-% test(search_breadth_first_finds_at_least_one_path) :-
-%     search_breadth_first(Paths),
-%     length(Paths, PathCount),
-%     assertion(PathCount >= 1).
-% 
-% test(search_breadth_first_all_paths_valid) :-
-%     search_breadth_first(Paths),
-%     maplist(valid_path, Paths).
-% 
-% test(search_breadth_first_goal_not_visited_more_than_once) :-
-%     search_breadth_first(Paths),
-%     maplist(goal_not_visited_more_than_once, Paths).
+test(search_depth_first_last_element_of_path_is_goal,
+     [forall(search_depth_first(Path)), nondet]) :-
+    goal_not_visited_more_than_once(Path),
+    last(Path, Last),
+    goal(Last).
 
-:- end_tests(search).
+:- end_tests(search_depth_first).
 
 % vim: set ft=prolog:
