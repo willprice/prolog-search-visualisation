@@ -1,45 +1,72 @@
+:- module(search,
+        [ search_depth_first/3
+        , search_breadth_first/3
+        , makepair/3
+        ]).
 :- use_module(library(pairs)).
+:- use_module(library(lambda)).
+:- use_module(library(apply)).
+:- use_module(library(assoc)).
+
+:- dynamic search:grid_size/2.
 
 
-% pos(X, Y)
-% grid_size(Width, Height).
+grid_size(3, 3).
 
 % Blind search
 % ------------
 % These search heuristics dont take new node viability into account
 % (i.e. is the new node closer to the goal?)
+goal(X) :- X = p(3,2).
+search_depth_first(p(X, Y), Goal, Path) :-
+    search_depth_first([p(X, Y)-[]], Goal, [p(X, Y)], Path).
+search_depth_first([Current-PathToGoalReversed|_], Goal, _, Path) :-
+    call(Goal, Current),
+    !,
+    reverse([Current|PathToGoalReversed], Path).
+search_depth_first(Agenda, Goal, Visited, Path) :-
+    select(Current-PathToCurrentReversed, Agenda, AgendaTail),
+    UpdatedVisited = [Current|Visited],
+    children(Current, ChildrenOfCurrent),
+    update_agenda(AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    search_depth_first(NewAgenda, Goal, UpdatedVisited, Path).
 
-% WARNING: Doesn't terminate due to the way we decide what to put in the
-% agenda, just gets caught going round in circles!
-search_depth_first([Goal|_Rest], Goal, ReversedPathToGoal, Path) :-
-    goal(Goal),
-    reverse([Goal|ReversedPathToGoal], Path),
-    !. % Cut because this definition is mutually exclusive with the
-       % next, if we've reached the goal, lets not go away from it
-search_depth_first(Agenda, Goal, ReversedPathToCurrent, Path) :-
-    select(Current, Agenda, Rest),
-    children(Current, Children),
-    subtract(Children, ReversedPathToCurrent, ChildrenNotOnPath),
-    append(ChildrenNotOnPath, Rest, NewAgenda),
-    search_depth_first(NewAgenda, Goal, [Current|ReversedPathToCurrent], Path).
+update_agenda(Agenda, _, [], _, Agenda).
+update_agenda(Agenda, Visited, [Child|ChildrenTail], Path, [Child-Path|NewAgenda]) :-
+    pairs_keys(Agenda, NodesOnAgenda),
+    \+ member(Child, NodesOnAgenda), 
+    \+ member(Child, Visited),
+    update_agenda(Agenda, Visited, ChildrenTail, Path, NewAgenda).
+update_agenda(Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
+    pairs_keys(Agenda, NodesOnAgenda),
+    (member(Child, NodesOnAgenda);
+     member(Child, Visited)),
+    update_agenda(Agenda, Visited, ChildrenTail, Path, NewAgenda).
+
+
+
+makepair(First, Second, Pair) :-
+    Pair = First-Second.
 
 search_breadth_first(Agenda, Goal, Path) :-
     search_breadth_first(Agenda, Goal, [], Path).
 search_breadth_first([Goal|_Rest], Goal, ReversedPathToGoal, Path) :-
-    goal(Goal),
-    reverse([Goal|ReversedPathToGoal], Path).
+    reverse([Goal|ReversedPathToGoal], Path),
+    !.
 search_breadth_first(Agenda, Goal, ReversedPathToCurrent, Path) :-
     select(Current, Agenda, Rest),
     children(Current, Children),
     subtract(Children, ReversedPathToCurrent, ChildrenNotOnPath),
-    append(Rest, ChildrenNotOnPath, NewAgenda),
+    union(Rest, ChildrenNotOnPath, NewAgenda),
     search_breadth_first(NewAgenda, Goal, [Current|ReversedPathToCurrent], Path).
+
 
 
 % Heuristic search
 % ----------------
-search_best_first(Agenda, Goal, ReversedPathFragment, Path) :-
-    goal(Goal),
+search_best_first(Agenda, Goal, Path) :-
+    search_best_first(Agenda, Goal, _, Path).
+search_best_first([Goal|_], Goal, ReversedPathFragment, Path) :-
     reverse(Path, [Goal|ReversedPathFragment]),
     !.
 search_best_first(Agenda, Goal, ReversedPathFragment, Path) :-
@@ -55,7 +82,6 @@ f(Heuristic, PathToCurrent, Goal, Current, Cost) :-
     Cost is CurrentPathCost + 1 + HeuristicCost.
 %search_beam(Agenda, Goal).
 search_a_star([Goal|_Rest], Goal, ReversedPathToGoal, Path) :-
-    goal(Goal),
     reverse([Goal|ReversedPathToGoal], Path).
 search_a_star(Agenda, Goal, ReversedPathToCurrent, Path) :-
     select(CurrentBest, Agenda, AgendaTail),
@@ -95,8 +121,6 @@ sort_children(Heuristic, Goal, Children, SortedChildren) :-
 
 % Grid specific
 % -------------
-goal(p(3, 3)).
-grid_size(3, 3).
 
 children(p(X, Y), Children) :-
     grid_size(Width, Height),
@@ -129,3 +153,5 @@ valid_pos(p(X, Y), Width, Height) :-
 %     format('goal: ~p~n', [Goal]),
 %     format('frame ~p~n', [Frame]),
 %     format('choice ~p~n', [Choice]).
+
+% vim: set ft=prolog:
