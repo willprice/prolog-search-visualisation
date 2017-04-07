@@ -27,7 +27,7 @@ search_depth_first(Agenda, Goal, Visited, Path) :-
     select(Current-PathToCurrentReversed, Agenda, AgendaTail),
     UpdatedVisited = [Current|Visited],
     children(Current, ChildrenOfCurrent),
-    update_agenda(AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    update_agenda(add_to_agenda_dfs, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
     search_depth_first(NewAgenda, Goal, UpdatedVisited, Path).
 
 
@@ -41,33 +41,26 @@ search_breadth_first(Agenda, Goal, Visited, Path) :-
     select(Current-PathToCurrentReversed, Agenda, AgendaTail),
     UpdatedVisited = [Current|Visited],
     children(Current, ChildrenOfCurrent),
-    update_agenda_bfs(AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    update_agenda(add_to_agenda_bfs, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
     search_breadth_first(NewAgenda, Goal, UpdatedVisited, Path).
 
-update_agenda(Agenda, _, [], _, Agenda).
-update_agenda(Agenda, Visited, [Child|ChildrenTail], Path, [Child-Path|NewAgenda]) :-
-    pairs_keys(Agenda, NodesOnAgenda),
-    \+ member(Child, NodesOnAgenda),
-    \+ member(Child, Visited),
-    update_agenda(Agenda, Visited, ChildrenTail, Path, NewAgenda).
-update_agenda(Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
-    pairs_keys(Agenda, NodesOnAgenda),
-    (member(Child, NodesOnAgenda);
-     member(Child, Visited)),
-    update_agenda(Agenda, Visited, ChildrenTail, Path, NewAgenda).
+add_to_agenda_dfs(Item, Agenda, UpdatedAgenda) :-
+    append([Item], Agenda, UpdatedAgenda).
+add_to_agenda_bfs(Item, Agenda, UpdatedAgenda) :-
+    append(Agenda, [Item], UpdatedAgenda).
 
-update_agenda_bfs(Agenda, _, [], _, Agenda).
-update_agenda_bfs(Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
+update_agenda(_, Agenda, _, [], _, Agenda).
+update_agenda(AgendaInsert, Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
     pairs_keys(Agenda, NodesOnAgenda),
     \+ member(Child, NodesOnAgenda),
     \+ member(Child, Visited),
-    update_agenda_bfs(Agenda, Visited, ChildrenTail, Path, NewPartialAgenda),
-    append(NewPartialAgenda, [Child-Path], NewAgenda).
-update_agenda_bfs(Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
+    update_agenda(AgendaInsert, Agenda, Visited, ChildrenTail, Path, NewPartialAgenda),
+    call(AgendaInsert, Child-Path, NewPartialAgenda, NewAgenda).
+update_agenda(AgendaInsert, Agenda, Visited, [Child|ChildrenTail], Path, NewAgenda) :-
     pairs_keys(Agenda, NodesOnAgenda),
     (member(Child, NodesOnAgenda);
      member(Child, Visited)),
-    update_agenda_bfs(Agenda, Visited, ChildrenTail, Path, NewAgenda).
+    update_agenda(AgendaInsert, Agenda, Visited, ChildrenTail, Path, NewAgenda).
 
 % Heuristic search
 % ----------------
