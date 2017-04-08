@@ -1,6 +1,7 @@
 :- module(search,
         [ search_depth_first/3
         , search_breadth_first/3
+        , search_id/3
         , search_best_first/3
         , search_a/3
         , search/4
@@ -20,6 +21,7 @@
 %
 :- meta_predicate search_depth_first(?, :, ?).
 :- meta_predicate search_breadth_first(?, :, ?).
+:- meta_predicate search_id(?, :, ?).
 :- meta_predicate search_best_first(?, :, ?).
 :- meta_predicate search_a(?, :, ?).
 :- meta_predicate search(?, :, ?).
@@ -27,6 +29,11 @@
 :- record search_config(
        combine_agenda:callable,
        cost:callable
+   ).
+:- record agenda_item(
+       path:list,
+       g_cost:integer=0,
+       h_cost:integer=0
    ).
 
 search_config_dfs(Config) :-
@@ -38,6 +45,12 @@ search_config_dfs(Config) :-
 search_config_bfs(Config) :-
     make_search_config([
         combine_agenda(combine_agenda_bfs),
+        cost(cost_nop)
+    ], Config).
+
+search_config_id(Config) :-
+    make_search_config([
+        combine_agenda(combine_agenda_dfs),
         cost(cost_nop)
     ], Config).
 
@@ -62,6 +75,10 @@ search_breadth_first(Point, Goal, Path) :-
     search_config_bfs(Config),
     search(Config, Point, Goal, Path).
 
+search_id(Point, Goal, Path) :-
+    search_config_id(Config),
+    search(Config, Point, Goal, Path).
+
 search_best_first(Point, Goal, Path) :-
     search_config_best_first(Config),
     search(Config, Point, Goal, Path).
@@ -74,36 +91,24 @@ search_a(Point, Goal, Path) :-
 % Agenda items are represented as pairs: f(GCost, HCost)-Path
 %   e.g. f(1, 3)-[p(1, 2), p(1, 1)] represents a current node of p(1,2)
 %   starting from p(1, 1) with costs: g(p(1,2)) = 1 and h(p(1, 3)) = 3.
-
-% search_state{
-%     start: p(1, 1),
-%     goal: p(3, 2),
-%     current: p(1, 3),
-%     visited: [p(1,1), p(1, 2), p(1, 3)],
-%     reversed_path: [p(1, 3), p(1, 2), p(1, 1)],
-%     cost_to_current: 3,
-%     children: [p(2,3), p(1,2)],
-%     agenda: [f(0, 1)-[Point]],
-% }
 search(SearchConfig, Point, Goal, Path) :-
     Point = p(_, _),
-    search(0, SearchConfig, [f(0, 0)-[Point]], Goal, [], Path).
-search(_, _, [f(_, _)-[Current|PathTailReversed]|_], Goal, _, Path) :-
+    make_agenda_item([path([Point]), g_cost(0), h_cost(0)], AgendaItem),
+    search(0, SearchConfig, [AgendaItem], Goal, [], Path).
+search(_, _, [TopAgendaItem|_], Goal, _, Path) :-
+    agenda_item_path(TopAgendaItem, [Current|PathTailReversed]),
     call(Goal, Current),
     !,
     reverse([Current|PathTailReversed], Path).
 search(Depth, SearchConfig, Agenda, Goal, Visited, Path) :-
-    select(f(CostToCurrent, _)-[Current|PathToCurrentReversed], Agenda, AgendaTail),
+    select(AgendaItem, Agenda, AgendaTail),
+    agenda_item_path(AgendaItem, [Current|PathToCurrentReversed]),
+    agenda_item_g_cost(AgendaItem, CostToCurrent),
     UpdatedVisited = [Current|Visited],
     children(Current, ChildrenOfCurrent),
     update_agenda(SearchConfig, CostToCurrent, Goal, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
     NextDepth #= Depth + 1,
     search(NextDepth, SearchConfig, NewAgenda, Goal, UpdatedVisited, Path).
-
-agenda_item(f(G, H), Current, PathTail, f(G, H)-[Current|PathTail]).
-
-node_from_agenda_item(AgendaItem, Node) :-
-    agenda_item(_, Node, _, AgendaItem).
 
 cost_h(_, Goal, Node, f(0, Cost)) :-
     findall(G, call(Goal, G), Goals),
@@ -124,41 +129,48 @@ combine_agenda_dfs(OldAgenda, ChildrenAgenda, CombinedAgenda) :-
 combine_agenda_bfs(OldAgenda, ChildrenAgenda, CombinedAgenda) :-
     append(OldAgenda, ChildrenAgenda, CombinedAgenda).
 
-combine_agendas([], Agenda, Agenda) :- !.
-combine_agendas(Agenda, [], Agenda) :- !.
-combine_agendas([A1Best|A1Tail],
-                [A2Best|A2Tail],
-                [First,Second|PartialAgenda]) :-
-    order_agenda_items(A1Best, A2Best, First, Second),
-    combine_agendas(A1Tail, A2Tail, PartialAgenda).
-
-order_agenda_items(f(G1, H1)-Path1, f(G2, H2)-Path2,
-                   f(G1, H1)-Path1, f(G2, H2)-Path2) :-
-   G1 + H1 #=< G2 + H2.
-order_agenda_items(f(G1, H1)-Path1, f(G2, H2)-Path2,
-                   f(G2, H2)-Path2, f(G1, H1)-Path1) :-
-   G1 + H1 #> G2 + H2.
+combine_agendas(SortedAgenda1, SortedAgenda2, MergedAgendas) :-
+    merge(agenda_comparison, SortedAgenda1, SortedAgenda2, MergedAgendas).
 
 
 sort_agenda(UnsortedAgenda, SortedAgenda) :-
     predsort(agenda_comparison, UnsortedAgenda, SortedAgenda).
 
 agenda_comparison(Delta, AgendaItem1, AgendaItem2) :-
-    agenda_item(f(G1, H1), _, _, AgendaItem1),
-    agenda_item(f(G2, H2), _, _, AgendaItem2),
+    agenda_item_g_cost(AgendaItem1, G1),
+    agenda_item_h_cost(AgendaItem1, H1),
+    agenda_item_g_cost(AgendaItem2, G2),
+    agenda_item_h_cost(AgendaItem2, H2),
     F1 #= G1 + H1,
     F2 #= G2 + H2,
     (F1 #> F2 -> Delta = '>'
     ;F1 #=< F2 -> Delta = '<'). % We don't let Delta be '=' since this will merge the items on the agenda.
 
 update_agenda(SearchConfig, CostToCurrent, Goal, Agenda, Visited, Children, Path, NewAgenda) :-
-    maplist(node_from_agenda_item, Agenda, NodesOnAgenda),
+    maplist(\AgendaItem^Node^(agenda_item_path(AgendaItem, [Node|_])), Agenda, NodesOnAgenda),
     exclude(\Child^(member(Child, NodesOnAgenda); member(Child, Visited)), Children, UnseenChildren),
     search_config_cost(SearchConfig, Cost_4),
     search_config_combine_agenda(SearchConfig, CombineAgendas_3),
-    maplist(\Child^AgendaItem^(call(Cost_4, CostToCurrent, Goal, Child, Cost), agenda_item(Cost, Child, Path, AgendaItem)), UnseenChildren, UnseenAgenda),
+    maplist(\Child^AgendaItem^(
+        call(Cost_4, CostToCurrent, Goal, Child, f(GCost, HCost)),
+        make_agenda_item([path([Child|Path]), g_cost(GCost), h_cost(HCost)], AgendaItem)
+    ), UnseenChildren, UnseenAgenda),
     sort_agenda(UnseenAgenda, SortedUnseenAgenda),
     call(CombineAgendas_3, Agenda, SortedUnseenAgenda, NewAgenda).
+
+
+% Helper predicates
+% -----------------
+
+merge(Comparison, [], SortedList2, SortedList2).
+merge(Comparison, SortedList1, [], SortedList1).
+merge(Comparison, [E1|SortedList1Tail], [E2|SortedList2Tail], [First, Second|SortedCombined]) :-
+    call(Comparison, Delta, E1, E2),
+    (Delta = '<' -> First = E1, Second = E2
+    ;Delta = '>' -> First = E2, Second = E1
+    ;Delta = '=' -> First = E1, Second = E2),
+    merge(Comparison, SortedList1Tail, SortedList2Tail, SortedCombined).
+
 
 % Debug hooks
 % -----------
