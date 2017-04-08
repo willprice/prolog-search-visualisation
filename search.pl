@@ -11,6 +11,7 @@
 :- use_module(library(apply)).
 :- use_module(library(assoc)).
 :- use_module(library(clpfd)).
+:- use_module(library(record)).
 
 % Blind search
 % ------------
@@ -23,25 +24,34 @@
 :- meta_predicate search_a(?, :, ?).
 :- meta_predicate search(?, :, ?).
 
-search_config_dfs(search_config{
-    combine_agenda_3: combine_agenda_dfs,
-    cost_4: cost_nop
-}).
+:- record search_config(
+       combine_agenda:callable,
+       cost:callable
+   ).
 
-search_config_bfs(search_config{
-    combine_agenda_3: combine_agenda_bfs,
-    cost_4: cost_nop
-}).
+search_config_dfs(Config) :-
+    make_search_config([
+        combine_agenda(combine_agenda_dfs),
+        cost(cost_nop)
+    ], Config).
 
-search_config_best_first(search_config{
-    combine_agenda_3: combine_agendas,
-    cost_4: cost_h
-}).
+search_config_bfs(Config) :-
+    make_search_config([
+        combine_agenda(combine_agenda_bfs),
+        cost(cost_nop)
+    ], Config).
 
-search_config_a(search_config{
-    combine_agenda_3: combine_agendas,
-    cost_4: cost_a
-}).
+search_config_best_first(Config) :-
+    make_search_config([
+        combine_agenda(combine_agendas),
+        cost(cost_h)
+    ], Config).
+
+search_config_a(Config) :-
+    make_search_config([
+        combine_agenda(combine_agendas),
+        cost(cost_a)
+    ], Config).
 
 
 search_depth_first(Point, Goal, Path) :-
@@ -65,19 +75,30 @@ search_a(Point, Goal, Path) :-
 %   e.g. f(1, 3)-[p(1, 2), p(1, 1)] represents a current node of p(1,2)
 %   starting from p(1, 1) with costs: g(p(1,2)) = 1 and h(p(1, 3)) = 3.
 
+% search_state{
+%     start: p(1, 1),
+%     goal: p(3, 2),
+%     current: p(1, 3),
+%     visited: [p(1,1), p(1, 2), p(1, 3)],
+%     reversed_path: [p(1, 3), p(1, 2), p(1, 1)],
+%     cost_to_current: 3,
+%     children: [p(2,3), p(1,2)],
+%     agenda: [f(0, 1)-[Point]],
+% }
 search(SearchConfig, Point, Goal, Path) :-
     Point = p(_, _),
-    search(SearchConfig, [f(0, 0)-[Point]], Goal, [], Path).
-search(_, [f(_, _)-[Current|PathTailReversed]|_], Goal, _, Path) :-
+    search(0, SearchConfig, [f(0, 0)-[Point]], Goal, [], Path).
+search(_, _, [f(_, _)-[Current|PathTailReversed]|_], Goal, _, Path) :-
     call(Goal, Current),
     !,
     reverse([Current|PathTailReversed], Path).
-search(SearchConfig, Agenda, Goal, Visited, Path) :-
+search(Depth, SearchConfig, Agenda, Goal, Visited, Path) :-
     select(f(CostToCurrent, _)-[Current|PathToCurrentReversed], Agenda, AgendaTail),
     UpdatedVisited = [Current|Visited],
     children(Current, ChildrenOfCurrent),
     update_agenda(SearchConfig, CostToCurrent, Goal, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
-    search(SearchConfig, NewAgenda, Goal, UpdatedVisited, Path).
+    NextDepth #= Depth + 1,
+    search(NextDepth, SearchConfig, NewAgenda, Goal, UpdatedVisited, Path).
 
 agenda_item(f(G, H), Current, PathTail, f(G, H)-[Current|PathTail]).
 
@@ -133,8 +154,8 @@ agenda_comparison(Delta, AgendaItem1, AgendaItem2) :-
 update_agenda(SearchConfig, CostToCurrent, Goal, Agenda, Visited, Children, Path, NewAgenda) :-
     maplist(node_from_agenda_item, Agenda, NodesOnAgenda),
     exclude(\Child^(member(Child, NodesOnAgenda); member(Child, Visited)), Children, UnseenChildren),
-    Cost_4 = SearchConfig.cost_4,
-    CombineAgendas_3 = SearchConfig.combine_agenda_3,
+    search_config_cost(SearchConfig, Cost_4),
+    search_config_combine_agenda(SearchConfig, CombineAgendas_3),
     maplist(\Child^AgendaItem^(call(Cost_4, CostToCurrent, Goal, Child, Cost), agenda_item(Cost, Child, Path, AgendaItem)), UnseenChildren, UnseenAgenda),
     sort_agenda(UnseenAgenda, SortedUnseenAgenda),
     call(CombineAgendas_3, Agenda, SortedUnseenAgenda, NewAgenda).
