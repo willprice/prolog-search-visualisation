@@ -98,10 +98,10 @@ cost(Goal, Node, f(0, Cost)) :-
 
 order_agenda_items(f(G1, H1)-Path1, f(G2, H2)-Path2,
                    f(G1, H1)-Path1, f(G2, H2)-Path2) :-
-   G1 + H1 #>= G2 + H2.
+   G1 + H1 #=< G2 + H2.
 order_agenda_items(f(G1, H1)-Path1, f(G2, H2)-Path2,
                    f(G2, H2)-Path2, f(G1, H1)-Path1) :-
-   G1 + H1 #< G2 + H2.
+   G1 + H1 #> G2 + H2.
 
 combine_agendas([], Agenda, Agenda) :- !.
 combine_agendas(Agenda, [], Agenda) :- !.
@@ -111,39 +111,23 @@ combine_agendas([A1Best|A1Tail],
     order_agenda_items(A1Best, A2Best, First, Second),
     combine_agendas(A1Tail, A2Tail, PartialAgenda).
 
+sort_agenda(UnsortedAgenda, SortedAgenda) :-
+    predsort(agenda_comparison, UnsortedAgenda, SortedAgenda).
+
+agenda_comparison(Delta, AgendaItem1, AgendaItem2) :-
+    agenda_item(f(G1, H1), _, _, AgendaItem1),
+    agenda_item(f(G2, H2), _, _, AgendaItem2),
+    F1 #= G1 + H1,
+    F2 #= G2 + H2,
+    (F1 #> F2 -> Delta = '>'
+    ;F1 #=< F2 -> Delta = '<'). % We don't let Delta be '=' since this will merge the items on the agenda.
+
 update_f_agenda(Goal, Agenda, Visited, Children, Path, NewAgenda) :-
     maplist(node_from_agenda_item, Agenda, NodesOnAgenda),
     exclude(\Child^(member(Child, NodesOnAgenda); member(Child, Visited)), Children, UnseenChildren),
     maplist(\Child^AgendaItem^(cost(Goal, Child, Cost), agenda_item(Cost, Child, Path, AgendaItem)), UnseenChildren, UnseenAgenda),
-    combine_agendas(Agenda, UnseenAgenda, NewAgenda).
-
-% heuristic(p(GoalX, GoalY), p(X, Y), Cost) :-
-%     Cost is abs(GoalX - X) + abs(GoalY - Y).
-% 
-% insert(_Heuristic, _Goal, [], [], _Agenda).
-% insert(Heuristic, Goal, [], Children, SortedChildren) :-
-%     sort_children(Heuristic, Goal, Children, SortedChildren).
-% insert(Heuristic, Goal, Agenda, Children, NewAgenda) :-
-%     sort_children(Heuristic, Goal, Children, SortedChildren),
-%     insert_sorted_children(Heuristic, Goal, Agenda, SortedChildren, NewAgenda).
-% 
-% insert_sorted_children(_Heuristic, _Goal, [], SortedChildren, SortedChildren).
-% insert_sorted_children(_Heuristic, _Goal, Agenda, [], Agenda).
-% insert_sorted_children(Heuristic, Goal, [Current|AgendaTail], [Child|ChildrenTail], [First, Second|NewAgendaTail]) :-
-%     call(Heuristic, Goal, Current, CurrentCost),
-%     call(Heuristic, Goal, Child, ChildCost),
-%     (ChildCost < CurrentCost ->
-%         (First = Child,
-%          Second = Current);
-%     (First = Current,
-%      Second = Child)),
-%     insert_sorted_children(Heuristic, Goal, AgendaTail, ChildrenTail, NewAgendaTail).
-% 
-% sort_children(Heuristic, Goal, Children, SortedChildren) :-
-%     BoundHeuristic = call(Heuristic, Goal),
-%     map_list_to_pairs(BoundHeuristic, Children, CostChildrenPairs),
-%     keysort(CostChildrenPairs, SortedCostChildrenPairs),
-%     pairs_values(SortedCostChildrenPairs, SortedChildren).
+    sort_agenda(UnseenAgenda, SortedUnseenAgenda),
+    combine_agendas(Agenda, SortedUnseenAgenda, NewAgenda).
 
 % Debug hooks
 % -----------
