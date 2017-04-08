@@ -78,7 +78,7 @@ search_best_first(Agenda, Goal, Visited, Path) :-
     select(f(_, _)-[Current|PathToCurrentReversed], Agenda, AgendaTail),
     UpdatedVisited = [Current|Visited],
     children(Current, ChildrenOfCurrent),
-    update_f_agenda(AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    update_f_agenda(Goal, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
     search_best_first(NewAgenda, Goal, UpdatedVisited, Path).
 
 search_a(p(X, Y), Goal, Path) :-
@@ -91,9 +91,9 @@ agenda_item(f(G, H), Current, PathTail, f(G, H)-[Current|PathTail]).
 node_from_agenda_item(AgendaItem, Node) :-
     agenda_item(_, Node, _, AgendaItem).
 
-cost(Node, Cost) :-
+cost(Goal, Node, f(0, Cost)) :-
+    findall(G, call(Goal, G), Goals),
     maplist(distance(Node), Goals, Costs),
-    %findall(Goal, goal(Goal), Goals),
     min_list(Costs, Cost).
 
 order_agenda_items(f(G1, H1)-Path1, f(G2, H2)-Path2,
@@ -111,11 +111,10 @@ combine_agendas([A1Best|A1Tail],
     order_agenda_items(A1Best, A2Best, First, Second),
     combine_agendas(A1Tail, A2Tail, PartialAgenda).
 
-update_f_agenda(Agenda, Visited, Children, Path, NewAgenda) :-
-    pairs_values(Agenda, AgendaPaths),
-    maplist(node_from_agenda_item, AgendaItems, NodesOnAgenda),
+update_f_agenda(Goal, Agenda, Visited, Children, Path, NewAgenda) :-
+    maplist(node_from_agenda_item, Agenda, NodesOnAgenda),
     exclude(\Child^(member(Child, NodesOnAgenda); member(Child, Visited)), Children, UnseenChildren),
-    maplist(\Child^AgendaItem^(cost(Child, Cost), agenda_item(Cost, Current, Path, AgendaItem)), UnseenChildren, UnseenAgenda),
+    maplist(\Child^AgendaItem^(cost(Goal, Child, Cost), agenda_item(Cost, Child, Path, AgendaItem)), UnseenChildren, UnseenAgenda),
     combine_agendas(Agenda, UnseenAgenda, NewAgenda).
 
 % heuristic(p(GoalX, GoalY), p(X, Y), Cost) :-

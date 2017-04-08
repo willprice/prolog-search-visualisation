@@ -5,6 +5,7 @@ goal(p(3, 2)).
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
+:- use_module(library(clpfd)).
 :- use_module(grid).
 :- use_module(search).
 
@@ -21,9 +22,9 @@ assert_valid_path([P1,P2|Rest]) :-
     assertion(assert_valid_path(Rest)).
 
 assert_valid_move(p(X1, Y1), p(X2, Y2)) :-
-    ((X1 is X2 + 1; X1 is X2 - 1),
+    ((X1 #= X2 + 1; X1 #= X2 - 1),
       Y1 = Y2);
-    ((Y1 is Y2 + 1; Y1 is Y2 - 1),
+    ((Y1 #= Y2 + 1; Y1 #= Y2 - 1),
      X1 = X2).
 
 assert_valid_point(p(X, Y)) :-
@@ -97,17 +98,17 @@ test(search_breadth_first_all_paths_valid,
 :- end_tests(search_breadth_first).
 
 
-% :- begin_tests(search_best_first).
-% 
-% test(search_best_first_finds_at_least_one_path) :-
-%     assert_search_find_min_number_of_paths(search_best_first, 1).
-% 
-% test(search_best_first_all_paths_valid,
-%      [forall(search_best_first(Path)), nondet]) :-
-%     assert_path_properties(Path).
-% 
-% :- end_tests(search_best_first).
-% 
+:- begin_tests(search_best_first).
+
+test(search_best_first_finds_at_least_one_path) :-
+    assert_search_find_min_number_of_paths(search_best_first, 1).
+
+test(search_best_first_all_paths_valid,
+     [forall(search_best_first(Path)), nondet]) :-
+    assert_path_properties(Path).
+
+:- end_tests(search_best_first).
+
 % :- begin_tests(search_a).
 % 
 % test(search_a_finds_at_least_one_path) :-
