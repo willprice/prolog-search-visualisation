@@ -71,6 +71,10 @@ search_best_first(Path) :-
 search_a(Path) :-
     search_start(Start),
     search_a(Start, goal, Path).
+
+search(Path) :-
+    search_start(Start),
+    search(Start, goal, Path).
 %--------------------------------------
 % Tests
 %--------------------------------------
@@ -109,14 +113,15 @@ test(search_best_first_all_paths_valid,
 
 :- end_tests(search_best_first).
 
-% :- begin_tests(search_a).
-% 
-% test(search_a_finds_at_least_one_path) :-
-%     assert_search_find_min_number_of_paths(search_a, 1).
-% 
-% test(search_a_all_paths_valid,
-%      [forall(search_a(Path)), nondet]) :-
-%     assert_path_properties(Path).
-% 
-% :- end_tests(search_a).
+:- begin_tests(search_a).
+
+test(search_a_finds_at_least_one_path) :-
+    assert_search_find_min_number_of_paths(search_a, 1).
+
+test(search_a_all_paths_valid,
+     [forall(search_a(Path)), nondet]) :-
+    assert_path_properties(Path).
+
+:- end_tests(search_a).
+
 % vim: set ft=prolog:
