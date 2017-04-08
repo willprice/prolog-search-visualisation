@@ -2,23 +2,24 @@
         [ search_depth_first/3
         , search_breadth_first/3
         , search_best_first/3
+        , search_a/3
         ]).
+:- use_module(grid).
 :- use_module(library(pairs)).
 :- use_module(library(lambda)).
 :- use_module(library(apply)).
 :- use_module(library(assoc)).
-
-:- dynamic search:grid_size/2.
-
-
-grid_size(3, 3).
+:- use_module(library(clpfd)).
 
 % Blind search
 % ------------
 % These search heuristics dont take new node viability into account
 % (i.e. is the new node closer to the goal?)
+%
+:- meta_predicate search_depth_first(?, :, ?).
+:- meta_predicate search_breadth_first(?, :, ?).
+:- meta_predicate search_best_first(?, :, ?).
 
-goal(X) :- X = p(3,2).
 search_depth_first(p(X, Y), Goal, Path) :-
     search_depth_first([p(X, Y)-[]], Goal, [], Path).
 search_depth_first([Current-PathToGoalReversed|_], Goal, _, Path) :-
@@ -68,122 +69,82 @@ update_agenda(AgendaInsert, Agenda, Visited, [Child|ChildrenTail], Path, NewAgen
 % ----------------
 
 search_best_first(p(X, Y), Goal, Path) :-
-    search_best_first([(p(X, Y)-0)-[]], Goal, [], Path).
-search_best_first([(Current-_)-PathToGoalReversed|_], Goal, _, Path) :-
+    search_best_first([f(0, 0)-[p(X, Y)]], Goal, [], Path).
+search_best_first([f(_, _)-[Current|PathTailReversed]|_], Goal, _, Path) :-
     call(Goal, Current),
     !,
-    reverse([Current|PathToGoalReversed], Path).
+    reverse([Current|PathTailReversed], Path).
 search_best_first(Agenda, Goal, Visited, Path) :-
-    select((Current-_)-PathToCurrentReversed, Agenda, AgendaTail),
+    select(f(_, _)-[Current|PathToCurrentReversed], Agenda, AgendaTail),
     UpdatedVisited = [Current|Visited],
     children(Current, ChildrenOfCurrent),
-    update_cost_agenda(AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    update_f_agenda(AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
     search_best_first(NewAgenda, Goal, UpdatedVisited, Path).
 
-makepair(Fst, Snd, Pair) :-
-    Pair = Fst-Snd.
+search_a(p(X, Y), Goal, Path) :-
+    search_best_first([(p(X, Y)-0)-[]], Goal, [], Path).
 
-child_to_agenda_item(Child, Cost, Path, AgendaItem) :-
-    makepair(Child, Cost, ChildAgendaItem),
-    makepair(ChildAgendaItem, Path, AgendaItem).
+makepair(Fst, Snd, Fst-Snd).
 
-node_from_agenda_item(Node-_, Node).
+agenda_item(f(G, H), Current, PathTail, f(G, H)-[Current|PathTail]).
+
+node_from_agenda_item(AgendaItem, Node) :-
+    agenda_item(_, Node, _, AgendaItem).
 
 cost(Node, Cost) :-
-    findall(Goal, goal(Goal), Goals),
     maplist(distance(Node), Goals, Costs),
+    %findall(Goal, goal(Goal), Goals),
     min_list(Costs, Cost).
 
-distance(p(X1, Y1), p(X2, Y2), Distance) :-
-    Distance is abs(X1  - X2) + abs(Y1 - Y2).
+order_agenda_items(f(G1, H1)-Path1, f(G2, H2)-Path2,
+                   f(G1, H1)-Path1, f(G2, H2)-Path2) :-
+   G1 + H1 #>= G2 + H2.
+order_agenda_items(f(G1, H1)-Path1, f(G2, H2)-Path2,
+                   f(G2, H2)-Path2, f(G1, H1)-Path1) :-
+   G1 + H1 #< G2 + H2.
 
 combine_agendas([], Agenda, Agenda) :- !.
 combine_agendas(Agenda, [], Agenda) :- !.
-combine_agendas([(N1-N1Cost)-N1Path|A1Tail],
-                [(N2-N2Cost)-N2Path|A2Tail],
-                [(N1-N1Cost)-N1Path, (N2-N2Cost)-N2Path|PartialAgenda]) :-
-    N1Cost  =< N2Cost,
-    combine_agendas(A1Tail, A2Tail, PartialAgenda).
-combine_agendas([(N1-N1Cost)-N1Path|A1Tail],
-                [(N2-N2Cost)-N2Path|A2Tail],
-                [(N2-N2Cost)-N2Path, (N1-N1Cost)-N1Path|PartialAgenda]) :-
-    N1Cost > N2Cost,
+combine_agendas([A1Best|A1Tail],
+                [A2Best|A2Tail],
+                [First,Second|PartialAgenda]) :-
+    order_agenda_items(A1Best, A2Best, First, Second),
     combine_agendas(A1Tail, A2Tail, PartialAgenda).
 
-update_cost_agenda(Agenda, Visited, Children, Path, NewAgenda) :-
-    pairs_keys(Agenda, AgendaItems),
+update_f_agenda(Agenda, Visited, Children, Path, NewAgenda) :-
+    pairs_values(Agenda, AgendaPaths),
     maplist(node_from_agenda_item, AgendaItems, NodesOnAgenda),
     exclude(\Child^(member(Child, NodesOnAgenda); member(Child, Visited)), Children, UnseenChildren),
-    maplist(\Child^AgendaItem^(cost(Child, Cost), child_to_agenda_item(Child, Cost, Path, AgendaItem)), UnseenChildren, UnseenAgenda),
+    maplist(\Child^AgendaItem^(cost(Child, Cost), agenda_item(Cost, Current, Path, AgendaItem)), UnseenChildren, UnseenAgenda),
     combine_agendas(Agenda, UnseenAgenda, NewAgenda).
 
-f(Heuristic, PathToCurrent, Goal, Current, Cost) :-
-    length(PathToCurrent, CurrentPathCost),
-    call(Heuristic, Goal, Current, HeuristicCost),
-    Cost is CurrentPathCost + 1 + HeuristicCost.
-
-heuristic(p(GoalX, GoalY), p(X, Y), Cost) :-
-    Cost is abs(GoalX - X) + abs(GoalY - Y).
-
-insert(_Heuristic, _Goal, [], [], _Agenda).
-insert(Heuristic, Goal, [], Children, SortedChildren) :-
-    sort_children(Heuristic, Goal, Children, SortedChildren).
-insert(Heuristic, Goal, Agenda, Children, NewAgenda) :-
-    sort_children(Heuristic, Goal, Children, SortedChildren),
-    insert_sorted_children(Heuristic, Goal, Agenda, SortedChildren, NewAgenda).
-
-insert_sorted_children(_Heuristic, _Goal, [], SortedChildren, SortedChildren).
-insert_sorted_children(_Heuristic, _Goal, Agenda, [], Agenda).
-insert_sorted_children(Heuristic, Goal, [Current|AgendaTail], [Child|ChildrenTail], [First, Second|NewAgendaTail]) :-
-    call(Heuristic, Goal, Current, CurrentCost),
-    call(Heuristic, Goal, Child, ChildCost),
-    (ChildCost < CurrentCost ->
-        (First = Child,
-         Second = Current);
-    (First = Current,
-     Second = Child)),
-    insert_sorted_children(Heuristic, Goal, AgendaTail, ChildrenTail, NewAgendaTail).
-
-sort_children(Heuristic, Goal, Children, SortedChildren) :-
-    BoundHeuristic = call(Heuristic, Goal),
-    map_list_to_pairs(BoundHeuristic, Children, CostChildrenPairs),
-    keysort(CostChildrenPairs, SortedCostChildrenPairs),
-    pairs_values(SortedCostChildrenPairs, SortedChildren).
-
-
-
-
-
-
-%search_beam(Agenda, Goal).
-search_a_star([Goal|_Rest], Goal, ReversedPathToGoal, Path) :-
-    reverse([Goal|ReversedPathToGoal], Path).
-search_a_star(Agenda, Goal, ReversedPathToCurrent, Path) :-
-    select(CurrentBest, Agenda, AgendaTail),
-    children(CurrentBest, Children),
-    insert(f(heuristic, ReversedPathToCurrent), Goal, AgendaTail, Children, NewAgenda),
-    search_a_star(NewAgenda, Goal, [CurrentBest|ReversedPathToCurrent], Path).
-
-% Grid specific
-% -------------
-
-children(p(X, Y), Children) :-
-    grid_size(Width, Height),
-    findall(Child, child(p(X, Y), Width, Height, Child), Children).
-
-child(CurrentPosition, Width, Height, NextPosition) :-
-    next_position(CurrentPosition, NextPosition),
-    valid_pos(NextPosition, Width, Height).
-next_position(p(X, Y), p(NewX, Y)) :-
-    NewX is X + 1;
-    NewX is X - 1.
-next_position(p(X, Y), p(X, NewY)) :-
-    NewY is Y + 1;
-    NewY is Y - 1.
-
-valid_pos(p(X, Y), Width, Height) :-
-    X =< Width, X > 0,
-    Y =< Height, Y > 0.
+% heuristic(p(GoalX, GoalY), p(X, Y), Cost) :-
+%     Cost is abs(GoalX - X) + abs(GoalY - Y).
+% 
+% insert(_Heuristic, _Goal, [], [], _Agenda).
+% insert(Heuristic, Goal, [], Children, SortedChildren) :-
+%     sort_children(Heuristic, Goal, Children, SortedChildren).
+% insert(Heuristic, Goal, Agenda, Children, NewAgenda) :-
+%     sort_children(Heuristic, Goal, Children, SortedChildren),
+%     insert_sorted_children(Heuristic, Goal, Agenda, SortedChildren, NewAgenda).
+% 
+% insert_sorted_children(_Heuristic, _Goal, [], SortedChildren, SortedChildren).
+% insert_sorted_children(_Heuristic, _Goal, Agenda, [], Agenda).
+% insert_sorted_children(Heuristic, Goal, [Current|AgendaTail], [Child|ChildrenTail], [First, Second|NewAgendaTail]) :-
+%     call(Heuristic, Goal, Current, CurrentCost),
+%     call(Heuristic, Goal, Child, ChildCost),
+%     (ChildCost < CurrentCost ->
+%         (First = Child,
+%          Second = Current);
+%     (First = Current,
+%      Second = Child)),
+%     insert_sorted_children(Heuristic, Goal, AgendaTail, ChildrenTail, NewAgendaTail).
+% 
+% sort_children(Heuristic, Goal, Children, SortedChildren) :-
+%     BoundHeuristic = call(Heuristic, Goal),
+%     map_list_to_pairs(BoundHeuristic, Children, CostChildrenPairs),
+%     keysort(CostChildrenPairs, SortedCostChildrenPairs),
+%     pairs_values(SortedCostChildrenPairs, SortedChildren).
 
 % Debug hooks
 % -----------
