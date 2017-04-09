@@ -41,11 +41,11 @@ framework solve the problem.
 @license MIT
 */
 :- module(search,
-        [ search_depth_first/3
-        , search_breadth_first/3
-        , search_best_first/3
-        , search_a/3
-        , search/4
+        [ search_depth_first/2
+        , search_breadth_first/2
+        , search_best_first/2
+        , search_a/2
+        , search/3
         ]).
 
 
@@ -55,13 +55,13 @@ framework solve the problem.
 :- use_module(library(assoc)).
 :- use_module(library(clpfd)).
 :- use_module(library(record)).
+:- use_module(util, [merge/4]).
 :- use_module(search_problem).
 
 %! combine_agenda(+OldAgenda:list(agenda_item), +ChildAgenda:list(agenda_item), -NewAgenda:list(agenda_item)) is det.
 %
 % Combines OldAgenda with ChildAgenda to yield NewAgenda which is used
 % in the next layer of the search.
-%
 
 :- record search_config(
        combine_agenda:callable,
@@ -72,6 +72,9 @@ framework solve the problem.
        g_cost:integer=0,
        h_cost:integer=0
    ).
+
+% Search strategy predicates
+% --------------------------
 
 search_config_dfs(Config) :-
     make_search_config([
@@ -97,43 +100,6 @@ search_config_a(Config) :-
         cost(cost_a)
     ], Config).
 
-
-search_depth_first(Point, SearchProblem, Path) :-
-    search_config_dfs(Config),
-    search(Config, SearchProblem, Point, Path).
-
-search_breadth_first(Point, SearchProblem, Path) :-
-    search_config_bfs(Config),
-    search(Config, SearchProblem, Point, Path).
-
-search_best_first(Point, SearchProblem, Path) :-
-    search_config_best_first(Config),
-    search(Config, SearchProblem, Point, Path).
-
-search_a(Point, SearchProblem, Path) :-
-    search_config_a(Config),
-    search(Config, SearchProblem, Point, Path).
-
-search(SearchConfig, SearchProblem, Point, Path) :-
-    Point = p(_, _),
-    make_agenda_item([path([Point]), g_cost(0), h_cost(0)], AgendaItem),
-    search(SearchConfig, SearchProblem, [AgendaItem], [], Path).
-search(_SearchConfig, SearchProblem, [TopAgendaItem|_], _, Path) :-
-    agenda_item_path(TopAgendaItem, [Current|PathTailReversed]),
-    search_problem_goal(SearchProblem, Goal),
-    call(Goal, Current),
-    !,
-    reverse([Current|PathTailReversed], Path).
-search(SearchConfig, SearchProblem, Agenda, Visited, Path) :-
-    select(AgendaItem, Agenda, AgendaTail),
-    agenda_item_path(AgendaItem, [Current|PathToCurrentReversed]),
-    agenda_item_g_cost(AgendaItem, CostToCurrent),
-    UpdatedVisited = [Current|Visited],
-    search_problem_children(SearchProblem, ChildrenPredicate),
-    call(ChildrenPredicate, Current, ChildrenOfCurrent),
-    update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
-    search(SearchConfig, SearchProblem, NewAgenda, UpdatedVisited, Path).
-
 cost_h(_G, H, _, _, To, f(0, Cost)) :-
     call(H, To, Cost).
 
@@ -152,6 +118,63 @@ combine_agenda_bfs(OldAgenda, ChildrenAgenda, CombinedAgenda) :-
 
 combine_agendas(SortedAgenda1, SortedAgenda2, MergedAgendas) :-
     merge(agenda_comparison, SortedAgenda1, SortedAgenda2, MergedAgendas).
+
+
+search_depth_first(SearchProblem, Path) :-
+    search_config_dfs(Config),
+    search(Config, SearchProblem, Path).
+
+search_breadth_first(SearchProblem, Path) :-
+    search_config_bfs(Config),
+    search(Config, SearchProblem, Path).
+
+search_best_first(SearchProblem, Path) :-
+    search_config_best_first(Config),
+    search(Config, SearchProblem, Path).
+
+search_a(SearchProblem, Path) :-
+    search_config_dfs(Config),
+    search(Config, SearchProblem, Path).
+
+% Search framework
+% ----------------
+
+search(SearchConfig, SearchProblem, Path) :-
+    search_problem_start(SearchProblem, StartPredicate),
+    call(StartPredicate, StartNode),
+    make_agenda_item([path([StartNode]), g_cost(0), h_cost(0)], AgendaItem),
+    search(SearchConfig, SearchProblem, [AgendaItem], [], Path).
+search(_SearchConfig, SearchProblem, [TopAgendaItem|_], _, Path) :-
+    agenda_item_path(TopAgendaItem, [Current|PathTailReversed]),
+    search_problem_goal(SearchProblem, Goal),
+    call(Goal, Current),
+    !,
+    reverse([Current|PathTailReversed], Path).
+search(SearchConfig, SearchProblem, Agenda, Visited, Path) :-
+    select(AgendaItem, Agenda, AgendaTail),
+    agenda_item_path(AgendaItem, [Current|PathToCurrentReversed]),
+    agenda_item_g_cost(AgendaItem, CostToCurrent),
+    UpdatedVisited = [Current|Visited],
+    search_problem_children(SearchProblem, ChildrenPredicate),
+    call(ChildrenPredicate, Current, ChildrenOfCurrent),
+    update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    search(SearchConfig, SearchProblem, NewAgenda, UpdatedVisited, Path).
+
+print_agenda_item(AgendaItem) :-
+    agenda_item_path(AgendaItem, [Head|_Rest]),
+    display(Head, HeadSimplified),
+    writeln(HeadSimplified).
+
+display(move(B1, B2, X), move(B1Simplified, B2Simplified, X)) :-
+    simplify(B1, B1Simplified),
+    simplify(B2, B2Simplified).
+
+simplify([], []).
+simplify([Head|Rest], [HeadSimplified|SimplifiedRest]) :-
+    (Head = black -> HeadSimplified = b
+    ;Head = white -> HeadSimplified = w
+    ;Head = empty -> HeadSimplified = e),
+    simplify(Rest, SimplifiedRest).
 
 
 sort_agenda(UnsortedAgenda, SortedAgenda) :-
@@ -180,31 +203,5 @@ update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, Agenda, Visit
     ), UnseenChildren, UnseenAgenda),
     sort_agenda(UnseenAgenda, SortedUnseenAgenda),
     call(CombineAgendas_3, Agenda, SortedUnseenAgenda, NewAgenda).
-
-% Helper predicates
-% ------------------
-merge(_, [], SortedList2, SortedList2).
-merge(_, SortedList1, [], SortedList1).
-merge(Comparison, [E1|SortedList1Tail], [E2|SortedList2Tail], [First, Second|SortedCombined]) :-
-    call(Comparison, Delta, E1, E2),
-    (Delta = '<' -> First = E1, Second = E2
-    ;Delta = '>' -> First = E2, Second = E1
-    ;Delta = '=' -> First = E1, Second = E2),
-    merge(Comparison, SortedList1Tail, SortedList2Tail, SortedCombined).
-
-
-% Debug hooks
-% -----------
-% prolog_trace_interception(Port, Frame, Choice, continue) :-
-%     prolog_frame_attribute(Frame, goal, Goal),
-%     print_debug_info(Port, Frame, Choice).
-% prolog_trace_interception(Port, Frame, Choice, continue).
-%
-% print_debug_info(Port, Frame, Choice) :-
-%     prolog_frame_attribute(Frame, goal, Goal),
-%     format('port: ~p~n', [Port]),
-%     format('goal: ~p~n', [Goal]),
-%     format('frame ~p~n', [Frame]),
-%     format('choice ~p~n', [Choice]).
 
 % vim: set ft=prolog:

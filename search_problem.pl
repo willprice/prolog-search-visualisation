@@ -1,3 +1,6 @@
+/** <module> Search problem
+
+*/
 % IMPORTANT, this module DOES declare a non empty public interface, but
 % it is created dynamically after generating the predicates with
 % `record/2`.
@@ -8,15 +11,17 @@
 % it is imperative that you wrap your predicates with the module prefix,
 % e.g. instead of =|goal(my_goal)|=, use =|goal(my_module:my_goal)|=.
 :- record search_problem(
-       % start/1, true if node is a goal.
+       %! start(-Node) is det.
+       %  true if node is a goal.
        start,
-       % goal/1, true if node is a goal.
+       %! goal(+Node) is multi.
+       %  true if node is a goal.
        goal:callable,
-       % children/2, children(Node, ChildNodes).
+       %! children(+Node, -ChildNodes) is det.
        children:callable,
-       % h/2, h(Node1, ChildNodes).
+       %! h(+Node, -Cost) is det.
        h:callable,
-       % g/3, g(FromNode, ToNode, Cost).
+       %! g(+FromNode, +ToNode, -Cost) is det.
        g:callable
    ).
 

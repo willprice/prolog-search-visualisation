@@ -4,7 +4,6 @@ This module defines a [search problem](search_problem.pl) for use with the searc
 
 The following dynamic predicates *MUST* be declared by the calling
 code:
-
 - start_position/1.
 - grid_size/2.
 - goal/1.
@@ -20,12 +19,12 @@ code:
     ]).
 
 
-%! start_position(-Pos:p(integer, integer)) is det.
+%! start_position(?Pos:p(integer, integer)) is det.
 %
 %  Declare the starting position in the grid
 :- dynamic start_position/1.   % e.g. start_position(p(1, 1)).
 
-%! grid_size(-Width:integer, -Height:integer) is det.
+%! grid_size(?Width:integer, ?Height:integer) is det.
 %
 % Defines the grid size where:
 % - X ranges from 1 to Width

@@ -5,6 +5,7 @@
 :- use_module(grid).
 :- use_module(search).
 
+% Configure grid
 :- asserta(grid:grid_size(3,3)).
 :- asserta(grid:goal(p(3,2))).
 :- asserta(grid:start_position(p(1,1))).
@@ -56,24 +57,20 @@ assert_path_properties(Path) :-
 
 
 search_depth_first(Path) :-
-    grid:start_position(Start),
     grid_search_problem(SearchProblem),
-    search_depth_first(Start, SearchProblem, Path).
+    search_depth_first(SearchProblem, Path).
 
 search_breadth_first(Path) :-
-    grid:start_position(Start),
     grid_search_problem(SearchProblem),
-    search_breadth_first(Start, SearchProblem, Path).
+    search_breadth_first(SearchProblem, Path).
 
 search_best_first(Path) :-
-    grid:start_position(Start),
     grid_search_problem(SearchProblem),
-    search_best_first(Start, SearchProblem, Path).
+    search_best_first(SearchProblem, Path).
 
 search_a(Path) :-
-    grid:start_position(Start),
     grid_search_problem(SearchProblem),
-    search_a(Start, SearchProblem, Path).
+    search_a(SearchProblem, Path).
 
 %--------------------------------------
 % Tests
