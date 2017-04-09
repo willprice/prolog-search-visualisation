@@ -1,7 +1,6 @@
 search_start(p(1,1)).
 :- asserta(grid:grid_size(3,3)).
 
-goal(p(3, 2)).
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
@@ -9,6 +8,7 @@ goal(p(3, 2)).
 :- use_module(grid).
 :- use_module(search).
 
+:- asserta(grid:goal(p(3,2))).
 
 assert_valid_path([Point]) :-
     assertion(assert_valid_point(Point)).
@@ -58,23 +58,24 @@ assert_path_properties(Path) :-
 
 search_depth_first(Path) :-
     search_start(Start),
-    search_depth_first(Start, goal, Path).
+    grid_search_problem(SearchProblem),
+    search_depth_first(Start, SearchProblem, Path).
 
 search_breadth_first(Path) :-
     search_start(Start),
-    search_breadth_first(Start, goal, Path).
+    grid_search_problem(SearchProblem),
+    search_breadth_first(Start, SearchProblem, Path).
 
 search_best_first(Path) :-
     search_start(Start),
-    search_best_first(Start, goal, Path).
+    grid_search_problem(SearchProblem),
+    search_best_first(Start, SearchProblem, Path).
 
 search_a(Path) :-
     search_start(Start),
-    search_a(Start, goal, Path).
+    grid_search_problem(SearchProblem),
+    search_a(Start, SearchProblem, Path).
 
-search(Path) :-
-    search_start(Start),
-    search(Start, goal, Path).
 %--------------------------------------
 % Tests
 %--------------------------------------
@@ -88,7 +89,6 @@ test(search_depth_first_all_paths_valid,
     assert_path_properties(Path).
 
 :- end_tests(search_depth_first).
-
 
 :- begin_tests(search_breadth_first).
 
