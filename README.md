@@ -1,5 +1,7 @@
 # Search Visualisation in Prolog
 
+[![Build Status](https://travis-ci.org/willprice/prolog-search-visualisation.svg?branch=master)](https://travis-ci.org/willprice/prolog-search-visualisation)
+
 WIP
 
 [SWI-Prolog](http://www.swi-prolog.org/) based tracer for visualisation search
