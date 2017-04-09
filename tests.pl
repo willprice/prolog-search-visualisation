@@ -2,5 +2,4 @@
 
 :- [search].
 :- load_test_files([]).
-:- run_tests.
-:- halt.
+:- run_tests, halt
