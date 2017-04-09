@@ -1,6 +1,3 @@
-search_start(p(1,1)).
-:- asserta(grid:grid_size(3,3)).
-
 
 :- use_module(library(apply)).
 :- use_module(library(debug)).
@@ -8,7 +5,9 @@ search_start(p(1,1)).
 :- use_module(grid).
 :- use_module(search).
 
+:- asserta(grid:grid_size(3,3)).
 :- asserta(grid:goal(p(3,2))).
+:- asserta(grid:start_position(p(1,1))).
 
 assert_valid_path([Point]) :-
     assertion(assert_valid_point(Point)).
@@ -42,7 +41,7 @@ assert_last_element_on_path_is_goal(Path) :-
     goal(Last).
 
 assert_first_element_on_path_is_start([Start|_]) :-
-    search_start(Start).
+    grid:start_position(Start).
 
 assert_search_find_min_number_of_paths(SearchPredicate, MinPathCount) :-
     findall(Path, call(SearchPredicate, Path), Paths),
@@ -57,22 +56,22 @@ assert_path_properties(Path) :-
 
 
 search_depth_first(Path) :-
-    search_start(Start),
+    grid:start_position(Start),
     grid_search_problem(SearchProblem),
     search_depth_first(Start, SearchProblem, Path).
 
 search_breadth_first(Path) :-
-    search_start(Start),
+    grid:start_position(Start),
     grid_search_problem(SearchProblem),
     search_breadth_first(Start, SearchProblem, Path).
 
 search_best_first(Path) :-
-    search_start(Start),
+    grid:start_position(Start),
     grid_search_problem(SearchProblem),
     search_best_first(Start, SearchProblem, Path).
 
 search_a(Path) :-
-    search_start(Start),
+    grid:start_position(Start),
     grid_search_problem(SearchProblem),
     search_a(Start, SearchProblem, Path).
 

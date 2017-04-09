@@ -1,9 +1,54 @@
+/** <module> Search
+
+Generic search algorithms
+
+This module defines core search algorithms, e.g. *breadth-first search*,
+*depth-first search*, *A search*.
+
+Since most search algorithms share a very similar form, instead of
+rewriting extremely similar predicates over and over again we instead
+define a search algorithm that is parameterised over the different
+aspects that vary to produce different search strategies. Think of this as
+a search framework, a concrete search algorithm can be made by
+instantiating the search framework with a *search strategy*.
+
+A set of search strategies are already provided to implement:
+
+  * Breadth first search
+  * Depth first search
+  * A search
+
+You can create you own search strategies and use them with search/4.
+
+
+## Creating a search strategy
+
+A search strategy is defined by a search strategy record which
+encapsulates all the predicates needed by the search framework:
+
+  * combine_agenda/3
+  * cost/6
+
+## Describing a new search problem
+
+A search problem is defined by a search problem record encapsulating all the
+problem domain specifics implementing a common interface allowing the search
+framework solve the problem.
+
+
+
+@author Will Price
+@license MIT
+*/
 :- module(search,
         [ search_depth_first/3
         , search_breadth_first/3
         , search_best_first/3
         , search_a/3
+        , search/4
         ]).
+
+
 :- use_module(library(pairs)).
 :- use_module(library(lambda)).
 :- use_module(library(apply)).
@@ -12,16 +57,11 @@
 :- use_module(library(record)).
 :- use_module(search_problem).
 
-% Blind search
-% ------------
-% These search heuristics dont take new node viability into account
-% (i.e. is the new node closer to the goal?)
+%! combine_agenda(+OldAgenda:list(agenda_item), +ChildAgenda:list(agenda_item), -NewAgenda:list(agenda_item)) is det.
 %
-% We have to declare higher order functions as meta predicates
-% otherwise, when invoked with predicates from other modules, the
-% predicate names will be incorrectly bound and searched in THIS modules
-% namespace rather than the namespace that the predicate originates
-% from.
+% Combines OldAgenda with ChildAgenda to yield NewAgenda which is used
+% in the next layer of the search.
+%
 
 :- record search_config(
        combine_agenda:callable,
@@ -73,11 +113,6 @@ search_best_first(Point, SearchProblem, Path) :-
 search_a(Point, SearchProblem, Path) :-
     search_config_a(Config),
     search(Config, SearchProblem, Point, Path).
-
-% The agenda is represented by a list of pairs of agenda items
-% Agenda items are represented as pairs: f(GCost, HCost)-Path
-%   e.g. f(1, 3)-[p(1, 2), p(1, 1)] represents a current node of p(1,2)
-%   starting from p(1, 1) with costs: g(p(1,2)) = 1 and h(p(1, 3)) = 3.
 
 search(SearchConfig, SearchProblem, Point, Path) :-
     Point = p(_, _),

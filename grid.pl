@@ -1,18 +1,51 @@
+/** <module> Grid search problem
+
+This module defines a [search problem](search_problem.pl) for use with the search predicates in search.pl
+
+The following dynamic predicates *MUST* be declared by the calling
+code:
+
+- start_position/1.
+- grid_size/2.
+- goal/1.
+
+@author Will Price
+@license MIT
+*/
 :- module(grid,
     [ grid_size/2
     , goal/1
+    , start_position/1
     , grid_search_problem/1
     ]).
 
-:- dynamic grid_size/2.
-:- dynamic goal/1.
+
+%! start_position(-Pos:p(integer, integer)) is det.
+%
+%  Declare the starting position in the grid
+:- dynamic start_position/1.   % e.g. start_position(p(1, 1)).
+
+%! grid_size(-Width:integer, -Height:integer) is det.
+%
+% Defines the grid size where:
+% - X ranges from 1 to Width
+% - Y ranges from 1 to Height
+:- dynamic grid_size/2.        % e.g. grid_size(4, 5).
+
+%! goal(?Pos:p(X:integer, Y:integer)) is nondet.
+%
+% Defines the target point (s) to reach.
+:- dynamic goal/1.             % e.g. goal(p(3, 4)).
 
 :- use_module(library(clpfd)).
 :- use_module(search_problem).
 
+%! grid_search_problem(-SearchProblem) is det.
+%
+%  Get the search_problem description
 grid_search_problem(SearchProblem) :-
     make_search_problem([
-        start(p(1, 1)),
+        start(grid:start_position),
         goal(grid:goal),
         children(grid:children),
         h(grid:h),
