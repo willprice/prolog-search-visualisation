@@ -23,9 +23,6 @@
 % namespace rather than the namespace that the predicate originates
 % from.
 
-:- meta_predicate cost_h(2, 3, ?, ?, ?, ?).
-:- meta_predicate cost_a(2, 3, ?, ?, ?, ?).
-
 :- record search_config(
        combine_agenda:callable,
        cost:callable
@@ -86,7 +83,7 @@ search(SearchConfig, SearchProblem, Point, Path) :-
     Point = p(_, _),
     make_agenda_item([path([Point]), g_cost(0), h_cost(0)], AgendaItem),
     search(SearchConfig, SearchProblem, [AgendaItem], [], Path).
-search(SearchConfig, SearchProblem, [TopAgendaItem|_], _, Path) :-
+search(_SearchConfig, SearchProblem, [TopAgendaItem|_], _, Path) :-
     agenda_item_path(TopAgendaItem, [Current|PathTailReversed]),
     search_problem_goal(SearchProblem, Goal),
     call(Goal, Current),
