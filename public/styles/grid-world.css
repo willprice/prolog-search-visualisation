@@ -10,3 +10,8 @@ header {
   display: block;
   margin: auto;
 }
+
+#grid-loading-message {
+  text-align: center;
+  margin: 1em;
+}

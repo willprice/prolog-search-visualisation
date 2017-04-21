@@ -1,16 +1,34 @@
 'use strict'
 
-function Agent (position) {
-  this.position = position
-  this.world = null
-}
+class Agent {
+  constructor (position) {
+    this._position = position
+    this.positionListeners = []
+    this.world = null
+  }
 
-Agent.prototype.move = function (position) {
-  this.position = position
-}
+  setWorld (world) {
+    this.world = world
+  }
 
-Agent.prototype.setWorld = function (world) {
-  this.world = world
+  get position () {
+    return this._position
+  }
+
+  addListener (listener) {
+    this.positionListeners.push(listener)
+  }
+
+  move (position) {
+    this._position = position
+    this.notifyListeners()
+  }
+
+  notifyListeners () {
+    for (const listener of this.positionListeners) {
+      listener.agentUpdateNotification(this)
+    }
+  }
 }
 
 export default Agent

@@ -1,9 +1,15 @@
+import { CellStates } from 'model/Cell'
+
 const CELL_UI_CONFIG = {
   size: 50,
-  color: '#eee',
+  color: {},
   strokeColor: '#aaa',
-  strokeWidth: 1
+  strokeWidth: 1,
+  frameTime: 0.2
 }
+CELL_UI_CONFIG.color[CellStates.default] = '#eee'
+CELL_UI_CONFIG.color[CellStates.visited] = '#0ab'
+CELL_UI_CONFIG.color[CellStates.goal] = '#f44'
 
 const AGENT_UI_CONFIG = {
   color: '#555',

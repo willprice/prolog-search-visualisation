@@ -6,19 +6,40 @@ class AgentUI {
   constructor (layer, agent) {
     this.layer = layer
     this.agent = agent
-    this.draw()
+    this.agent.addListener(this)
+    this.circle = this.draw()
+  }
+
+  agentUpdateNotification (agent) {
+    this.update()
   }
 
   draw () {
     let circle = new Konva.Circle({
-      x: (this.agent.position.x - 1 + 0.5) * CELL_UI_CONFIG.size,
-      y: (this.agent.position.y - 1 + 0.5) * CELL_UI_CONFIG.size,
+      x: this._xFromAgent(),
+      y: this._yFromAgent(),
       radius: (CELL_UI_CONFIG.size / 2) - AGENT_UI_CONFIG.strokeWidth - AGENT_UI_CONFIG.padding,
       fill: AGENT_UI_CONFIG.color,
       stroke: AGENT_UI_CONFIG.strokeColor,
       strokeWidth: AGENT_UI_CONFIG.strokeWidth
     })
     this.layer.add(circle)
+    return circle
+  }
+
+  _xFromAgent () {
+    return (this.agent.position.x - 1 + 0.5) * CELL_UI_CONFIG.size
+  }
+
+  _yFromAgent () {
+    return (this.agent.position.y - 1 + 0.5) * CELL_UI_CONFIG.size
+  }
+
+  update () {
+    this.circle.to({
+      x: this._xFromAgent(),
+      y: this._yFromAgent()
+    })
   }
 }
 
