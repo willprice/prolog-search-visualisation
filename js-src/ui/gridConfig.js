@@ -5,4 +5,11 @@ const CELL_UI_CONFIG = {
   cellStrokeWidth: 1
 }
 
-export { CELL_UI_CONFIG }
+const AGENT_UI_CONFIG = {
+  color: '#555',
+  stroke: '#555',
+  strokeWidth: 1,
+  padding: 5
+}
+
+export { AGENT_UI_CONFIG, CELL_UI_CONFIG }

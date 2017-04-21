@@ -1,11 +1,13 @@
 'use strict'
 import { CELL_UI_CONFIG } from 'ui/gridConfig'
 import CellUI from 'ui/CellUI'
+import AgentUI from 'ui/AgentUI'
 import Konva from 'konva'
 
 const GridWorldUI = function (containerId, world) {
   this.world = world
   this.rows = []
+  this.agents = []
 
   this.stage = new Konva.Stage({
     height: this.world.grid.length * CELL_UI_CONFIG.cellSize,
@@ -25,6 +27,10 @@ const GridWorldUI = function (containerId, world) {
       let cellUi = new CellUI(this.cellLayer, worldCell)
       this.rows.push(cellUi)
     }
+  }
+
+  for (let i = 0; i < this.world.agents.length; i++) {
+    this.agents.push(new AgentUI(this.agentLayer, this.world.agents[i]))
   }
 }
 

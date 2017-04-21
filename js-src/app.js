@@ -7,7 +7,7 @@ import log from 'util/log'
 
 const gridWorld = new GridWorld(4, 4)
 const agent = new Agent(new Position(1, 1))
-agent.setWorld(gridWorld)
+gridWorld.addAgent(agent)
 
 const gridWorldUI = new GridWorldUI('grid', gridWorld)
 gridWorldUI.render()
