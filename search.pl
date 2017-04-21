@@ -57,12 +57,6 @@ framework solve the problem.
 :- use_module(library(record)).
 :- use_module(util, [merge/4]).
 :- use_module(search_problem).
-
-%! combine_agenda(+OldAgenda:list(agenda_item), +ChildAgenda:list(agenda_item), -NewAgenda:list(agenda_item)) is det.
-%
-% Combines OldAgenda with ChildAgenda to yield NewAgenda which is used
-% in the next layer of the search.
-
 :- record search_config(
        combine_agenda:callable,
        cost:callable
@@ -100,15 +94,20 @@ search_config_a(Config) :-
         cost(cost_a)
     ], Config).
 
+cost_nop(_G, _H, _, _, _, f(0, 0)).
+
 cost_h(_G, H, _, _, To, f(0, Cost)) :-
     call(H, To, Cost).
-
-cost_nop(_G, _H, _, _, _, f(0, 0)).
 
 cost_a(G, H, From, CostToCurrent, To, f(CostToNode, Cost)) :-
     CostToNode #= CostToCurrent + MoveCost,
     call(G, From, To, MoveCost),
     call(H, To, Cost).
+
+%! combine_agenda(+OldAgenda:list(agenda_item), +ChildAgenda:list(agenda_item), -NewAgenda:list(agenda_item)) is det.
+%
+% Combines OldAgenda with ChildAgenda to yield NewAgenda which is used
+% in the next layer of the search.
 
 combine_agenda_dfs(OldAgenda, ChildrenAgenda, CombinedAgenda) :-
     append(ChildrenAgenda, OldAgenda, CombinedAgenda).
@@ -118,7 +117,6 @@ combine_agenda_bfs(OldAgenda, ChildrenAgenda, CombinedAgenda) :-
 
 combine_agendas(SortedAgenda1, SortedAgenda2, MergedAgendas) :-
     merge(agenda_comparison, SortedAgenda1, SortedAgenda2, MergedAgendas).
-
 
 search_depth_first(SearchProblem, Path) :-
     search_config_dfs(Config),
@@ -158,6 +156,7 @@ search(SearchConfig, SearchProblem, Agenda, Visited, Path) :-
     search_problem_children(SearchProblem, ChildrenPredicate),
     call(ChildrenPredicate, Current, ChildrenOfCurrent),
     update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    format('~p: ~p\n', [Current, NewAgenda]),
     search(SearchConfig, SearchProblem, NewAgenda, UpdatedVisited, Path).
 
 print_agenda_item(AgendaItem) :-
