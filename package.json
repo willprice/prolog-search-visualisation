@@ -1,0 +1,26 @@
+{
+  "name": "search-visualisation",
+  "version": "0.0.1",
+  "description": "Search visualisation frontend code for use prolog API server",
+  "main": "js-src/app.js",
+  "repository": "https://github.com/willprice/prolog-search-visualisation",
+  "author": "Will Price",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0-beta.1",
+    "babel-preset-env": "^1.4.0",
+    "browser-sync": "^2.18.8",
+    "browser-sync-webpack-plugin": "^1.1.4",
+    "exports-loader": "^0.6.4",
+    "karma": "^1.6.0",
+    "karma-jasmine": "^1.1.0",
+    "webpack": "^2.4.1",
+    "webpack-cli": "^1.0.0",
+    "webpack-dev-server": "^2.4.2",
+    "webpack-livereload-plugin": "^0.11.0"
+  },
+  "dependencies": {
+    "konva": "^1.6.0"
+  }
+}
