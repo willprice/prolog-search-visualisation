@@ -1,10 +1,11 @@
 'use strict'
+/* global WebSocket */
 
-import log from "util/log"
+import log from 'util/log'
 
-const LOG_TOPIC = "SearchApi"
+const LOG_TOPIC = 'SearchApi'
 
-function SearchApi(rootUrl, onsetup) {
+function SearchApi (rootUrl, onsetup) {
   this.rootUrl = rootUrl
   this.connection = this.setupConnection(onsetup)
 }
@@ -27,17 +28,18 @@ SearchApi.prototype.setupConnection = function (onsetup) {
   return connection
 }
 
-SearchApi.prototype.handleMessage = function(event) {
+SearchApi.prototype.handleMessage = function (event) {
   try {
     const payload = JSON.parse(event.data)
+    console.log(payload)
     log(LOG_TOPIC, `Received ${event.data}`)
-  } catch(error) {
+  } catch (error) {
     log(LOG_TOPIC, `Failed to parse JSON from '${event.data}'`)
     log(LOG_TOPIC, error)
   }
 }
 
-SearchApi.prototype.sendCommand = function(command, args) {
+SearchApi.prototype.sendCommand = function (command, args) {
   let payload = {
     command: command,
     args: args
@@ -46,7 +48,7 @@ SearchApi.prototype.sendCommand = function(command, args) {
   log(LOG_TOPIC, `Sent ${JSON.stringify(payload)}`)
 }
 
-SearchApi.prototype.setup = function() {
+SearchApi.prototype.setup = function () {
 
 }
 

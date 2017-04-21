@@ -2,12 +2,12 @@ const path = require('path')
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin')
 
 module.exports = {
-  entry: "app.js",
+  entry: 'app.js',
   output: {
-    path: path.resolve(__dirname, "public"),
-    filename: "bundle.js",
-    publicPath: "/",
-    libraryTarget: "umd"
+    path: path.resolve(__dirname, 'public'),
+    filename: 'bundle.js',
+    publicPath: '/',
+    libraryTarget: 'umd'
   },
   watch: true,
   module: {
@@ -21,19 +21,19 @@ module.exports = {
             presets: ['env']
           }
         }
-      },
-    ],
+      }
+    ]
   },
   resolve: {
     modules: [
-      "node_modules",
-      path.resolve(__dirname, "js-src")
+      'node_modules',
+      path.resolve(__dirname, 'js-src')
     ]
   },
   devServer: {
     contentBase: path.join(__dirname, 'public'),
     compress: true,
-    port: 3100,
+    port: 3100
   },
   plugins: [
     new BrowserSyncPlugin({
@@ -42,9 +42,9 @@ module.exports = {
       proxy: 'http://localhost:3100'
     }, {
       reload: false
-    }),
+    })
   ],
-  devtool: "source-map",
+  devtool: 'source-map',
   context: __dirname,
-  target: "web"
+  target: 'web'
 }

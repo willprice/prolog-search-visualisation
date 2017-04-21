@@ -4,16 +4,15 @@ import Konva from 'konva'
 
 class CellUI {
 
-  constructor(layer, cell) {
+  constructor (layer, cell) {
     this.cell = cell
     this.layer = layer
     this.draw()
   }
 
-  draw() {
+  draw () {
     let x = this.cell.position.x
     let y = this.cell.position.y
-    let z = 0
 
     let width = CELL_UI_CONFIG.cellSize
     let height = CELL_UI_CONFIG.cellSize
@@ -25,7 +24,7 @@ class CellUI {
       height: height,
       fill: CELL_UI_CONFIG.cellColor,
       stroke: CELL_UI_CONFIG.cellStrokeColor,
-      strokeWidth: CELL_UI_CONFIG.cellStrokeWidth,
+      strokeWidth: CELL_UI_CONFIG.cellStrokeWidth
     })
     this.layer.add(rect)
   }

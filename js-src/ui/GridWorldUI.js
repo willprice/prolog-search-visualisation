@@ -2,7 +2,7 @@
 import CellUI from 'ui/CellUI'
 import Konava from 'konva'
 
-const GridWorldUI = function(stage, world) {
+const GridWorldUI = function (stage, world) {
   this.world = world
   this.rows = []
 
@@ -23,7 +23,7 @@ const GridWorldUI = function(stage, world) {
   }
 }
 
-GridWorldUI.prototype.render = function() {
+GridWorldUI.prototype.render = function () {
   this.stage.draw()
   this.cellLayer.draw()
   this.agentLayer.draw()

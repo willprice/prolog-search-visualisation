@@ -1,10 +1,10 @@
 'use strict'
 
-function Cell(position) {
+function Cell (position) {
   this.position = position
 }
 
-Cell.prototype.move = function(position) {
+Cell.prototype.move = function (position) {
   this.position = position
 }
 

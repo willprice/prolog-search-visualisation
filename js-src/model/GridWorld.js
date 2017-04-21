@@ -2,8 +2,7 @@
 import Cell from 'model/Cell'
 import Position from 'model/Position'
 
-
-function GridWorld(cols, rows) {
+function GridWorld (cols, rows) {
   this.grid = this.createGrid(cols, rows)
 }
 
