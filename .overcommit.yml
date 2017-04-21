@@ -1,0 +1,16 @@
+# For a complete list of hooks, see:
+# https://github.com/brigade/overcommit/tree/master/lib/overcommit/hook
+#
+# For a complete list of options that you can use to customize hooks, see:
+# https://github.com/brigade/overcommit#configuration
+
+PreCommit:
+  Standard:
+    enabled: true
+    on_warn: fail # Treat all warnings as failures
+  TravisLint:
+    enabled: true
+    on_warn: fail
+PostCheckout:
+  NpmInstall:
+    enabled: true
