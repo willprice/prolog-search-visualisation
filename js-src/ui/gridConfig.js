@@ -1,13 +1,13 @@
 const CELL_UI_CONFIG = {
-  cellSize: 50,
-  cellColor: '#eee',
-  cellStrokeColor: '#aaa',
-  cellStrokeWidth: 1
+  size: 50,
+  color: '#eee',
+  strokeColor: '#aaa',
+  strokeWidth: 1
 }
 
 const AGENT_UI_CONFIG = {
   color: '#555',
-  stroke: '#555',
+  strokeColor: '#555',
   strokeWidth: 1,
   padding: 5
 }

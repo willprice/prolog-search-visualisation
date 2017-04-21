@@ -11,11 +11,11 @@ class AgentUI {
 
   draw () {
     let circle = new Konva.Circle({
-      x: (this.agent.position.x - 1 + 0.5) * CELL_UI_CONFIG.cellSize,
-      y: (this.agent.position.y - 1 + 0.5) * CELL_UI_CONFIG.cellSize,
-      radius: (CELL_UI_CONFIG.cellSize / 2) - AGENT_UI_CONFIG.strokeWidth - AGENT_UI_CONFIG.padding,
+      x: (this.agent.position.x - 1 + 0.5) * CELL_UI_CONFIG.size,
+      y: (this.agent.position.y - 1 + 0.5) * CELL_UI_CONFIG.size,
+      radius: (CELL_UI_CONFIG.size / 2) - AGENT_UI_CONFIG.strokeWidth - AGENT_UI_CONFIG.padding,
       fill: AGENT_UI_CONFIG.color,
-      stroke: AGENT_UI_CONFIG.stroke,
+      stroke: AGENT_UI_CONFIG.strokeColor,
       strokeWidth: AGENT_UI_CONFIG.strokeWidth
     })
     this.layer.add(circle)

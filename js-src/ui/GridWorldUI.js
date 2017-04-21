@@ -10,8 +10,8 @@ const GridWorldUI = function (containerId, world) {
   this.agents = []
 
   this.stage = new Konva.Stage({
-    height: this.world.grid.length * CELL_UI_CONFIG.cellSize,
-    width: this.world.grid[0].length * CELL_UI_CONFIG.cellSize,
+    height: this.world.grid.length * CELL_UI_CONFIG.size,
+    width: this.world.grid[0].length * CELL_UI_CONFIG.size,
     container: containerId
   })
   this.cellLayer = new Konva.Layer()
