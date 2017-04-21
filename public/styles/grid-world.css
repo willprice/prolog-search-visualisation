@@ -2,9 +2,11 @@ header {
   text-align: center;
 }
 
-#grid-world-container {
+#grid-container {
+  width: 100%;
+}
+
+#grid .konvajs-content {
   display: block;
   margin: auto;
-  width: 600px;
-  height: 600px;
 }
