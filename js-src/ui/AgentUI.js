@@ -8,6 +8,8 @@ class AgentUI {
     this.agent = agent
     this.agent.addListener(this)
     this.circle = this.draw()
+    this.tweenConfigs = []
+    this.animatationInProgress = false
   }
 
   agentUpdateNotification (agent) {
@@ -36,10 +38,31 @@ class AgentUI {
   }
 
   update () {
-    this.circle.to({
+    // TODO: Figure out how to stage this transformation
+    this.addTween({
+      node: this.circle,
       x: this._xFromAgent(),
       y: this._yFromAgent()
     })
+    this.animate()
+  }
+
+  addTween (tweenConfig) {
+    this.tweenConfigs.push(tweenConfig)
+  }
+
+  animate () {
+    if (!this.animatationInProgress && this.tweenConfigs.length > 0) {
+      this.animatationInProgress = true
+      let tweenConfig = this.tweenConfigs.shift()
+      tweenConfig.onFinish = () => {
+        this.animatationInProgress = false
+        this.animate()
+      }
+      console.log(tweenConfig)
+      let tween = new Konva.Tween(tweenConfig)
+      tween.play()
+    }
   }
 }
 
