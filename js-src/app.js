@@ -18,4 +18,3 @@ agent.move(p(1, 2))
 agent.move(p(1, 3))
 agent.move(p(1, 4))
 agent.move(p(2, 4))
-

@@ -1,10 +1,11 @@
 'use strict'
 import { CELL_UI_CONFIG } from 'ui/gridConfig'
 import Konva from 'konva'
+import Animatable from './Animatable'
 
-class CellUI {
-
+class CellUI extends Animatable {
   constructor (layer, cell) {
+    super()
     this.cell = cell
     this.cell.addListener(this)
     this.layer = layer
@@ -27,7 +28,6 @@ class CellUI {
       stroke: CELL_UI_CONFIG.strokeColor,
       strokeWidth: CELL_UI_CONFIG.strokeWidth
     })
-    this.updates = []
     this.layer.add(rect)
     return rect
   }
@@ -45,14 +45,14 @@ class CellUI {
   }
 
   update () {
-    let tween = new Konva.Tween({
+    this._addPendingTween({
       node: this.rect,
       x: this._xFromCell(this.cell),
       y: this._yFromCell(this.cell),
       fill: this._fillFromCellState(this.cell),
       duration: CELL_UI_CONFIG.frameTime
     })
-    tween.play()
+    this.animate()
   }
 
   cellUpdateNotification (cell) {
