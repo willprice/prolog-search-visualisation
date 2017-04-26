@@ -62,6 +62,7 @@ framework solve the problem.
    ).
 :- record agenda_item(
        path:list,
+       depth:integer,
        g_cost:integer=0,
        h_cost:integer=0
    ).
@@ -136,21 +137,19 @@ search(SearchType, SearchProblem, Callback, Path) :-
     search_strategy(SearchType, SearchConfig),
     search_problem_start(SearchProblem, StartPredicate),
     call(StartPredicate, StartNode),
-    make_agenda_item([path([StartNode]), g_cost(0), h_cost(0)], AgendaItem),
-    search(SearchConfig, SearchProblem, Callback, [AgendaItem], [], Path).
+    make_agenda_item([path([StartNode]), g_cost(0), h_cost(0), depth(0)], AgendaItem),
+    search(SearchConfig, SearchProblem, Callback, 0, [AgendaItem], [], Path).
 
 % Search framework
 % ----------------
 
-search(_SearchConfig, SearchProblem, Callback, [TopAgendaItem|_], _, Path) :-
-    must_be(ground, Callback),
+search(_SearchConfig, SearchProblem, Callback, _Depth, [TopAgendaItem|_], _, Path) :-
     agenda_item_path(TopAgendaItem, [Current|PathTailReversed]),
     search_problem_goal(SearchProblem, Goal),
     call(Goal, Current),
     !,
     reverse([Current|PathTailReversed], Path).
-search(SearchConfig, SearchProblem, Callback, Agenda, Visited, Path) :-
-    must_be(ground, Callback),
+search(SearchConfig, SearchProblem, Callback, Depth, Agenda, Visited, Path) :-
     select(AgendaItem, Agenda, AgendaTail),
     agenda_item_path(AgendaItem, [Current|PathToCurrentReversed]),
     agenda_item_g_cost(AgendaItem, CostToCurrent),
@@ -161,7 +160,8 @@ search(SearchConfig, SearchProblem, Callback, Agenda, Visited, Path) :-
     debug('search', 'Calling search callback ~p', [Callback]),
     catch(call(Callback, Current, NewAgenda), Error, print_message(informational, Error)),
     debug('search', 'Called search callback ~p', [Callback]),
-    search(SearchConfig, SearchProblem, Callback, NewAgenda, UpdatedVisited, Path).
+    NewDepth #= Depth + 1,
+    search(SearchConfig, SearchProblem, Callback, NewDepth, NewAgenda, UpdatedVisited, Path).
 
 print_agenda_item(AgendaItem) :-
     agenda_item_path(AgendaItem, [Head|_Rest]),

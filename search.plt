@@ -56,21 +56,9 @@ assert_path_properties(Path) :-
     assert_last_element_on_path_is_goal(Path).
 
 
-search_depth_first(Path) :-
+search(SearchType, Path) :-
     grid_search_problem(SearchProblem),
-    search:search(dfs, SearchProblem, Path).
-
-search_breadth_first(Path) :-
-    grid_search_problem(SearchProblem),
-    search:search(bfs, SearchProblem, Path).
-
-search_best_first(Path) :-
-    grid_search_problem(SearchProblem),
-    search:search(best_first, SearchProblem, Path).
-
-search_a(Path) :-
-    grid_search_problem(SearchProblem),
-    search:search(a, SearchProblem, Path).
+    search:search(SearchType, SearchProblem, Path).
 
 %--------------------------------------
 % Tests
@@ -78,10 +66,10 @@ search_a(Path) :-
 :- begin_tests(search_depth_first).
 
 test(search_depth_first_finds_at_least_one_path) :-
-    assert_search_find_min_number_of_paths(search_depth_first, 1).
+    assert_search_find_min_number_of_paths(search(dfs), 1).
 
 test(search_depth_first_all_paths_valid,
-     [forall(search_depth_first(Path)), nondet]) :-
+     [forall(search(dfs, Path)), nondet]) :-
     assert_path_properties(Path).
 
 :- end_tests(search_depth_first).
@@ -89,10 +77,10 @@ test(search_depth_first_all_paths_valid,
 :- begin_tests(search_breadth_first).
 
 test(search_breadth_first_finds_at_least_one_path) :-
-    assert_search_find_min_number_of_paths(search_breadth_first, 1).
+    assert_search_find_min_number_of_paths(search(bfs), 1).
 
 test(search_breadth_first_all_paths_valid,
-     [forall(search_breadth_first(Path)), nondet]) :-
+     [forall(search(bfs, Path)), nondet]) :-
     assert_path_properties(Path).
 
 :- end_tests(search_breadth_first).
@@ -101,10 +89,10 @@ test(search_breadth_first_all_paths_valid,
 :- begin_tests(search_best_first).
 
 test(search_best_first_finds_at_least_one_path) :-
-    assert_search_find_min_number_of_paths(search_best_first, 1).
+    assert_search_find_min_number_of_paths(search(best_first), 1).
 
 test(search_best_first_all_paths_valid,
-     [forall(search_best_first(Path)), nondet]) :-
+     [forall(search(best_first, Path)), nondet]) :-
     assert_path_properties(Path).
 
 :- end_tests(search_best_first).
@@ -112,10 +100,10 @@ test(search_best_first_all_paths_valid,
 :- begin_tests(search_a).
 
 test(search_a_finds_at_least_one_path) :-
-    assert_search_find_min_number_of_paths(search_a, 1).
+    assert_search_find_min_number_of_paths(search(a), 1).
 
 test(search_a_all_paths_valid,
-     [forall(search_a(Path)), nondet]) :-
+     [forall(search(a, Path)), nondet]) :-
     assert_path_properties(Path).
 
 :- end_tests(search_a).
