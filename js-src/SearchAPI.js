@@ -45,8 +45,11 @@ class SearchAPI {
         callback(payload)
       }
     } catch (error) {
-      log(LOG_TOPIC, `Failed to parse JSON from '${event.data}'`)
-      log(LOG_TOPIC, error)
+      if (error instanceof SyntaxError) {
+        log(LOG_TOPIC, `Failed to parse JSON from '${event.data}'`)
+      } else {
+        throw error
+      }
     }
   }
 

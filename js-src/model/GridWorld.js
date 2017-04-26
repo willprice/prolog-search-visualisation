@@ -1,10 +1,12 @@
 'use strict'
 import { Cell, CellStates } from 'model/Cell'
-
 import Position from 'model/Position'
 import Agent from 'model/Agent'
 import GridSearchAPI from 'GridSearchAPI'
 import log from 'util/log'
+import Path from 'model/Path'
+
+const DEBUG_TOPIC = 'GridWorld'
 
 class GridWorld {
   constructor (config) {
@@ -29,17 +31,17 @@ class GridWorld {
   }
 
   agendaUpdateNotification (response) {
-    let agenda = response.data
-    this.updateGrid(agenda)
-    for (let listener of this.agendaUpdateListeners) {
-      listener.agendaUpdateNotification(this)
+    let responseCode = response.response
+    if (responseCode === 'ok') {
+      let agenda = response.data
+      this.updateGrid(agenda)
+      for (let listener of this.agendaUpdateListeners) {
+        listener.agendaUpdateNotification(this)
+      }
       setTimeout(this.searchApi.step.bind(this.searchApi), 1000)
+    } else {
+      log(DEBUG_TOPIC, 'Invalid response from server ' + JSON.stringify(response))
     }
-    setTimeout(this.searchApi.step.bind(this.searchApi), 1000)
-  }
-
-  step () {
-
   }
 
   addAgendaUpdateListener (listener) {
@@ -48,8 +50,9 @@ class GridWorld {
 
   updateGrid (agenda) {
     let topAgendaItem = agenda[0]
-    let path = topAgendaItem.path.reverse()
-    this.agent.move(path[path.length - 1])
+    let path = new Path(topAgendaItem.path.reverse())
+    console.log(path)
+    this.agent.move(path.last)
   }
 
   setupGoalCell () {
