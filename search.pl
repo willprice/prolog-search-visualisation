@@ -53,7 +53,7 @@ framework solve the problem.
 :- use_module(library(record)).
 :- use_module(util, [merge/4]).
 :- use_module(search_problem).
-:- record search_config(
+:- record search_strategy(
        combine_agenda:callable,
        cost:callable
    ).
@@ -65,26 +65,26 @@ framework solve the problem.
 
 % Search strategy predicates
 % --------------------------
-search_config(dfs, Config) :-
-    make_search_config([
+search_strategy(dfs, Config) :-
+    make_search_strategy([
         combine_agenda(combine_agenda_dfs),
         cost(cost_nop)
     ], Config).
 
-search_config(bfs, Config) :-
-    make_search_config([
+search_strategy(bfs, Config) :-
+    make_search_strategy([
         combine_agenda(combine_agenda_bfs),
         cost(cost_nop)
     ], Config).
 
-search_config(best_first, Config) :-
-    make_search_config([
+search_strategy(best_first, Config) :-
+    make_search_strategy([
         combine_agenda(combine_agendas),
         cost(cost_h)
     ], Config).
 
-search_config(a, Config) :-
-    make_search_config([
+search_strategy(a, Config) :-
+    make_search_strategy([
         combine_agenda(combine_agendas),
         cost(cost_a)
     ], Config).
@@ -114,7 +114,7 @@ combine_agendas(SortedAgenda1, SortedAgenda2, MergedAgendas) :-
     merge(agenda_comparison, SortedAgenda1, SortedAgenda2, MergedAgendas).
 
 search(SearchType, SearchProblem, Path) :-
-    search_config(SearchType, SearchConfig),
+    search_strategy(SearchType, SearchConfig),
     search_problem_start(SearchProblem, StartPredicate),
     call(StartPredicate, StartNode),
     make_agenda_item([path([StartNode]), g_cost(0), h_cost(0)], AgendaItem),
@@ -173,8 +173,8 @@ agenda_comparison(Delta, AgendaItem1, AgendaItem2) :-
 update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, Agenda, Visited, Children, Path, NewAgenda) :-
     maplist(\AgendaItem^Node^(agenda_item_path(AgendaItem, [Node|_])), Agenda, NodesOnAgenda),
     exclude(\Child^(member(Child, NodesOnAgenda); member(Child, Visited)), Children, UnseenChildren),
-    search_config_cost(SearchConfig, Cost_4),
-    search_config_combine_agenda(SearchConfig, CombineAgendas_3),
+    search_strategy_cost(SearchConfig, Cost_4),
+    search_strategy_combine_agenda(SearchConfig, CombineAgendas_3),
     search_problem_g(SearchProblem, G),
     search_problem_h(SearchProblem, H),
     maplist(\Child^AgendaItem^(
