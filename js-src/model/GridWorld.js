@@ -15,6 +15,7 @@ class GridWorld {
     this.agent = new Agent(config.start)
     this.searchApi = new GridSearchAPI('ws://localhost:4000/api')
     this.agendaUpdateListeners = []
+    this.previousAgenda = null
     this.setupGoalCell()
     this.setupStartCell()
     this.setupSearch()
@@ -39,6 +40,7 @@ class GridWorld {
         listener.agendaUpdateNotification(this)
       }
       setTimeout(this.searchApi.step.bind(this.searchApi), 1000)
+      this.previousAgenda = agenda
     } else {
       log(DEBUG_TOPIC, 'Invalid response from server ' + JSON.stringify(response))
     }
@@ -49,10 +51,9 @@ class GridWorld {
   }
 
   updateGrid (agenda) {
-    let topAgendaItem = agenda[0]
-    let path = new Path(topAgendaItem.path.reverse())
-    console.log(path)
-    this.agent.move(path.last)
+    let bestAgendaItem = agenda[0]
+    let path = new Path(bestAgendaItem.path.reverse())
+    this.agent.followPath(path)
   }
 
   setupGoalCell () {

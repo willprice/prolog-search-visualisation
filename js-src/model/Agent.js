@@ -19,6 +19,13 @@ class Agent {
     this.positionListeners.push(listener)
   }
 
+  followPath (path) {
+    path.forEach((position) => {
+      console.log(position)
+      this.move(position)
+    })
+  }
+
   move (position) {
     this._position = position
     this.notifyListeners()
