@@ -36,13 +36,13 @@ class SearchAPI {
   }
 
   handleMessage (event) {
+    log(LOG_TOPIC, `Received payload ${event.data}`)
     try {
       const payload = JSON.parse(event.data)
-      log(LOG_TOPIC, `Received payload ${event.data}`)
-      let cb = this.awaitingResponse[payload.id]
-      if (cb !== undefined) {
+      let callback = this.awaitingResponse[payload.id]
+      if (callback !== undefined) {
         log(LOG_TOPIC, `Running callback for message ${payload.id}`)
-        cb(payload)
+        callback(payload)
       }
     } catch (error) {
       log(LOG_TOPIC, `Failed to parse JSON from '${event.data}'`)
@@ -51,7 +51,7 @@ class SearchAPI {
   }
 
   sendCommand (command, args, cb) {
-    let messageId = this.nextMessageId()
+    let messageId = this.newMessageId()
     let payload = {
       command: command,
       args: args,
@@ -62,13 +62,21 @@ class SearchAPI {
     log(LOG_TOPIC, `Sent ${JSON.stringify(payload)}`)
   }
 
-  search (algorithm) {
+  search (algorithm, cb) {
     this.sendCommand('search', {
       algorithm: algorithm
-    })
+    }, cb)
   }
 
-  nextMessageId () {
+  step () {
+    this.sendCommand('step', null)
+  }
+
+  reset () {
+    this.sendCommand('reset', null)
+  }
+
+  newMessageId () {
     return this._nextMessageId++
   }
 }

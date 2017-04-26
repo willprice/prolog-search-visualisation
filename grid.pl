@@ -38,6 +38,11 @@ code:
 
 :- use_module(library(clpfd)).
 :- use_module(search_problem).
+:- use_module(json_serialisation).
+
+:- multifile json_serialisation:to_json/2.
+json_serialisation:to_json(p(X, Y), _{x: X, y: Y}).
+json_serialisation:to_json(grid_size(Width, Height), _{ width: Width, height: Height}).
 
 %! grid_search_problem(-SearchProblem) is det.
 %

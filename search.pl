@@ -54,6 +54,8 @@ framework solve the problem.
 :- use_module(library(record)).
 :- use_module(util, [merge/4]).
 :- use_module(search_problem).
+:- use_module(json_serialisation).
+
 :- record search_strategy(
        combine_agenda:callable,
        cost:callable
@@ -63,6 +65,17 @@ framework solve the problem.
        g_cost:integer=0,
        h_cost:integer=0
    ).
+
+:- multifile json_serialisation:to_json/2.
+json_serialisation:to_json(AgendaItem, _{
+        h_cost: HCost,
+        g_cost: GCost,
+        path: PathJson
+    }) :-
+        agenda_item_path(AgendaItem, Path),
+        agenda_item_g_cost(AgendaItem, GCost),
+        agenda_item_h_cost(AgendaItem, HCost),
+        json_serialisation:to_json(Path, PathJson).
 
 % Search strategy predicates
 % --------------------------

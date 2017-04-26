@@ -1,12 +1,11 @@
 'use strict'
 import Konva from 'konva'
 import { CELL_UI_CONFIG, AGENT_UI_CONFIG } from 'ui/gridConfig'
-import Animatable from './Animatable'
 
-class AgentUI extends Animatable {
-  constructor (layer, agent) {
-    super()
+class AgentUI {
+  constructor (layer, animationQueue, agent) {
     this.layer = layer
+    this.animationQueue = animationQueue
     this.agent = agent
     this.agent.addListener(this)
     this.circle = this.draw()
@@ -40,12 +39,11 @@ class AgentUI extends Animatable {
 
   update () {
     // TODO: Figure out how to stage this transformation
-    this._addPendingTween({
+    this.animationQueue.addTween({
       node: this.circle,
       x: this._xFromAgent(),
       y: this._yFromAgent()
     })
-    this.animate()
   }
 }
 

@@ -2,14 +2,54 @@
 import { Cell, CellStates } from 'model/Cell'
 
 import Position from 'model/Position'
+import Agent from 'model/Agent'
+import GridSearchAPI from 'GridSearchAPI'
+import log from 'util/log'
 
 class GridWorld {
   constructor (config) {
     this.config = config
-    this.grid = GridWorld.createGrid(config.width, config.height)
-    this.agents = []
+    this.grid = GridWorld.createGrid(config.size.width, config.size.height)
+    this.agent = new Agent(config.start)
+    this.searchApi = new GridSearchAPI('ws://localhost:4000/api')
+    this.agendaUpdateListeners = []
     this.setupGoalCell()
     this.setupStartCell()
+    this.setupSearch()
+  }
+
+  setupSearch () {
+    this.searchApi.setupConnection().then(() => {
+      return this.searchApi.setupGrid(this.config)
+    }).then(() => {
+      return this.searchApi.search('bfs', this.agendaUpdateNotification.bind(this))
+    }).then((path) => {
+      log('Search', path)
+    })
+  }
+
+  agendaUpdateNotification (response) {
+    let agenda = response.data
+    this.updateGrid(agenda)
+    for (let listener of this.agendaUpdateListeners) {
+      listener.agendaUpdateNotification(this)
+      setTimeout(this.searchApi.step.bind(this.searchApi), 1000)
+    }
+    setTimeout(this.searchApi.step.bind(this.searchApi), 1000)
+  }
+
+  step () {
+
+  }
+
+  addAgendaUpdateListener (listener) {
+    this.agendaUpdateListeners.push(listener)
+  }
+
+  updateGrid (agenda) {
+    let topAgendaItem = agenda[0]
+    let path = topAgendaItem.path.reverse()
+    this.agent.move(path[path.length - 1])
   }
 
   setupGoalCell () {
@@ -31,11 +71,6 @@ class GridWorld {
       grid.push(row)
     }
     return grid
-  }
-
-  addAgent (agent) {
-    this.agents.push(agent)
-    agent.addListener(this)
   }
 
   agentUpdateNotification (agent) {

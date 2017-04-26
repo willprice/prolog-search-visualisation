@@ -21,6 +21,7 @@
 :- use_module(library(http/websocket)).
 :- use_module(search_problem).
 :- use_module(search).
+:- use_module(json_serialisation).
 
 
 start_server :-
@@ -55,17 +56,17 @@ api_ws_handler(WebSocket) :-
     debug(DebugTopic, 'Receiving message ~p', [Message]),
     ( Message.opcode == close
     -> true
-    ; api_handler(Message.data, Response),
+    ; api_handler(Message.data, Response, WebSocket),
       ws_send(WebSocket, json(Response)),
       debug(DebugTopic, 'The response ~p was sent', [Response]),
       api_ws_handler(WebSocket)
     ).
 
 debug_api_topic('api-server').
-api_handler(Payload, ResponseWithId) :-
+api_handler(Payload, ResponseWithId, WebSocket) :-
     debug_api_topic(DebugTopic),
     debug(DebugTopic, 'The payload ~p was received', [Payload]),
-    api_handler(Payload.command, Payload.args, Response),
+    api_handler(Payload.command, Payload.args, Payload.id, WebSocket, Response),
     put_dict(id, Response, Payload.id, ResponseWithId),
     debug(DebugTopic, 'The response ~p is ready to be sent', [Response]).
 
@@ -73,34 +74,38 @@ api_handler(Payload, ResponseWithId) :-
 
 :- use_module(grid).
 
-to_json(p(X, Y), _{x: X, y: Y}).
 
-
-search_callback(CurrentItem, Agenda) :-
+search_callback(WebSocket, MessageId, CurrentItem, Agenda) :-
     debug('api-server', 'Current: ~p', [CurrentItem]),
-    debug('api-server', 'Agenda: ~p', [Agenda]).
+    debug('api-server', 'Agenda: ~p', [Agenda]),
+    to_json(Agenda, AgendaJson),
+    Response = _{
+        response: ok,
+        id: MessageId,
+        data: AgendaJson
+    },
+    ws_send(WebSocket, json(Response)),
+    ws_receive(WebSocket, Message, [format(json)]),
+    agenda_api_handler(Message.data.command).
 
-api_handler("search", Args, Response) :-
+agenda_api_handler("step").
+agenda_api_handler("reset") :-
+    throw(exception(reset_search, "User cancelled search")).
+
+
+api_handler("search", Args, MessageId, WebSocket, Response) :-
     !, % Do not backtrack into the catch all error api_handler
     debug_api_topic(DebugTopic),
     atom_string(SearchType, Args.algorithm),
     debug(DebugTopic, 'Search type ~p', [SearchType]),
     grid:grid_search_problem(SearchProblem),
     debug(DebugTopic, 'Search problem ~p', [SearchProblem]),
-    (
-        debug(DebugTopic, 'Starting search', []),
-        search(SearchType, SearchProblem, search_callback, Path),
-        debug(DebugTopic, 'Path ~p', [Path]),
-        maplist(to_json, Path, JsonPath),
-        Response = _{ response: ok, data: JsonPath }
-    );(
-        debug(DebugTopic, 'Not path found', []),
-        Response = _{ response: search_fail, data: null }
-    ),
+    debug(DebugTopic, 'Starting search', []),
+    search(SearchType, SearchProblem, search_callback(WebSocket, MessageId), _),
     debug(DebugTopic, 'Responding with ~p', [Response]).
 
 
-api_handler("grid:setup", Args, Response) :-
+api_handler("grid:setup", Args, _MessageId, _WebSocket, Response) :-
     !, % Do not backtrack into the catch all error api_handler
     debug_api_topic(DebugTopic),
     debug(DebugTopic, 'Setup grid with ~p', [Args]),
@@ -113,7 +118,7 @@ api_handler("grid:setup", Args, Response) :-
     debug(DebugTopic, 'Responding with ~p', [Response]).
 
 
-api_handler(Command, Args, Response) :-
+api_handler(Command, Args, _MessageId, _WebSocket, Response) :-
     debug_api_topic(DebugTopic),
     debug(DebugTopic, 'No know handler for command ~p', [Command]),
     Response = _{ response: error_unknown_command,

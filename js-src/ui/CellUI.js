@@ -1,12 +1,11 @@
 'use strict'
 import { CELL_UI_CONFIG } from 'ui/gridConfig'
 import Konva from 'konva'
-import Animatable from './Animatable'
 
-class CellUI extends Animatable {
-  constructor (layer, cell) {
-    super()
+class CellUI {
+  constructor (layer, animationQueue, cell) {
     this.cell = cell
+    this.animationQueue = animationQueue
     this.cell.addListener(this)
     this.layer = layer
     this.rect = this.draw()
@@ -45,14 +44,13 @@ class CellUI extends Animatable {
   }
 
   update () {
-    this._addPendingTween({
+    this.animationQueue.addTween({
       node: this.rect,
       x: this._xFromCell(this.cell),
       y: this._yFromCell(this.cell),
       fill: this._fillFromCellState(this.cell),
       duration: CELL_UI_CONFIG.frameTime
     })
-    this.animate()
   }
 
   cellUpdateNotification (cell) {
