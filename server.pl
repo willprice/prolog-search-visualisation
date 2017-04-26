@@ -75,6 +75,11 @@ api_handler(Payload, ResponseWithId) :-
 
 to_json(p(X, Y), _{x: X, y: Y}).
 
+
+search_callback(CurrentItem, Agenda) :-
+    debug('api-server', 'Current: ~p', [CurrentItem]),
+    debug('api-server', 'Agenda: ~p', [Agenda]).
+
 api_handler("search", Args, Response) :-
     !, % Do not backtrack into the catch all error api_handler
     debug_api_topic(DebugTopic),
@@ -84,7 +89,7 @@ api_handler("search", Args, Response) :-
     debug(DebugTopic, 'Search problem ~p', [SearchProblem]),
     (
         debug(DebugTopic, 'Starting search', []),
-        search:search(SearchType, SearchProblem, Path),
+        search(SearchType, SearchProblem, search_callback, Path),
         debug(DebugTopic, 'Path ~p', [Path]),
         maplist(to_json, Path, JsonPath),
         Response = _{ response: ok, data: JsonPath }

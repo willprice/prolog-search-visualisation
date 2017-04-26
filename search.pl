@@ -42,6 +42,7 @@ framework solve the problem.
 */
 :- module(search,
         [ search/3
+        , search/4
         ]).
 
 
@@ -114,9 +115,10 @@ combine_agendas(SortedAgenda1, SortedAgenda2, MergedAgendas) :-
     merge(agenda_comparison, SortedAgenda1, SortedAgenda2, MergedAgendas).
 
 search(SearchType, SearchProblem, Path) :-
-    DummyCallback = true,
+    DummyCallback = \_^_^(true),
     search(SearchType, SearchProblem, DummyCallback, Path).
 
+:- meta_predicate search(+, +, 2, -).
 search(SearchType, SearchProblem, Callback, Path) :-
     search_strategy(SearchType, SearchConfig),
     search_problem_start(SearchProblem, StartPredicate),
@@ -143,7 +145,9 @@ search(SearchConfig, SearchProblem, Callback, Agenda, Visited, Path) :-
     search_problem_children(SearchProblem, ChildrenPredicate),
     call(ChildrenPredicate, Current, ChildrenOfCurrent),
     update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
-    catch(call(Callback), Error, print_message(informational, Error)),
+    debug('search', 'Calling search callback ~p', [Callback]),
+    catch(call(Callback, Current, NewAgenda), Error, print_message(informational, Error)),
+    debug('search', 'Called search callback ~p', [Callback]),
     search(SearchConfig, SearchProblem, Callback, NewAgenda, UpdatedVisited, Path).
 
 print_agenda_item(AgendaItem) :-
