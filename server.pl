@@ -4,6 +4,10 @@
 % =swipl server.pl=
 % =:- start_server.=
 
+% We leverage websockets for communications, to see a simple example of
+% how this works in SWI-prolog, visit
+% https://gist.github.com/willprice/0b9ec66ce59799b7632dd1a224bd485e
+% and play around with the small example.
 
 :- module(search_visualisation_server,
     [ start_server/0,
