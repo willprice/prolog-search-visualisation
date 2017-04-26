@@ -9,6 +9,8 @@ class SearchAPI {
   constructor (rootUrl, onsetup) {
     this.rootUrl = rootUrl
     this.connection = this.setupConnection(onsetup)
+    this._nextMessageId = 0
+    this.awaitingResponse = new Map()
   }
 
   setupConnection (onsetup) {
@@ -32,21 +34,32 @@ class SearchAPI {
   handleMessage (event) {
     try {
       const payload = JSON.parse(event.data)
-      console.log(payload)
-      log(LOG_TOPIC, `Received ${event.data}`)
+      log(LOG_TOPIC, `Received payload ${event.data}`)
+      let cb = this.awaitingResponse[payload.id]
+      if (cb !== undefined) {
+        log(LOG_TOPIC, `Running callback for message ${payload.id}`)
+        cb(payload)
+      }
     } catch (error) {
       log(LOG_TOPIC, `Failed to parse JSON from '${event.data}'`)
       log(LOG_TOPIC, error)
     }
   }
 
-  sendCommand (command, args) {
+  sendCommand (command, args, cb) {
+    let messageId = this.nextMessageId()
     let payload = {
       command: command,
-      args: args
+      args: args,
+      id: messageId
     }
+    this.awaitingResponse[messageId] = cb
     this.connection.send(JSON.stringify(payload))
     log(LOG_TOPIC, `Sent ${JSON.stringify(payload)}`)
+  }
+
+  nextMessageId () {
+    return this._nextMessageId++
   }
 }
 

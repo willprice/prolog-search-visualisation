@@ -60,10 +60,11 @@ api_ws_handler(WebSocket) :-
     ).
 
 debug_api_topic('api-server').
-api_handler(Payload, Response) :-
+api_handler(Payload, ResponseWithId) :-
     debug_api_topic(DebugTopic),
     debug(DebugTopic, 'The payload ~p was received', [Payload]),
     api_handler(Payload.command, Payload.args, Response),
+    put_dict(id, Response, Payload.id, ResponseWithId),
     debug(DebugTopic, 'The response ~p is ready to be sent', [Response]).
 
 %% GRID Specific code
@@ -73,9 +74,9 @@ api_handler("grid:setup", Args, Response) :-
     debug(DebugTopic, 'Setup grid with ~p', [Args]),
     GridSize = grid_size(Args.size.width,
                          Args.size.height),
-    StartPosition = p(Args.start.x, Args.start.y),
-    GoalPosition = p(Args.goal.x, Args.goal.y),
-    setup(GridSize, StartPosition, GoalPosition),
+    Start = p(Args.start.x, Args.start.y),
+    Goal = p(Args.goal.x, Args.goal.y),
+    grid_setup(GridSize, Start, Goal),
     Response = _{ response: ok, data: null },
     debug(DebugTopic, 'Responding with ~p', [Response]),
     !. % Do not backtrack into the catch all error api_handler
@@ -84,16 +85,18 @@ api_handler(Command, Args, Response) :-
     debug_api_topic(DebugTopic),
     debug(DebugTopic, 'No know handler for command ~p', [Command]),
     Response = _{ response: error_unknown_command,
-                  data: _{ 
+                  data: _{
                     command: Command,
                     args: Args
                   }
                 }.
 
-
-setup(GridSize, StartPosition, GoalPosition) :-
-    asserta(GridSize),
-    asserta(start_position(StartPosition)),
-    asserta(goal_position(GoalPosition)).
+grid_setup(GridSize, Start, Goal) :-
+    retractall(grid:grid_size(_, _)),
+    asserta(grid:GridSize),
+    retractall(grid:start(_)),
+    asserta(grid:start(Start)),
+    retractall(grid:goal(_)),
+    asserta(grid:goal(Goal)).
 
 % vim: set ft=prolog:
