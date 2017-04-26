@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "karma-webpack": "^2.0.3"
+  }
+}

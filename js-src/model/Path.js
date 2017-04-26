@@ -25,7 +25,15 @@ class Path {
       longestCommonSubsequence.push(this.at(i))
       i++
     }
-    return longestCommonSubsequence
+    return {
+      common: new Path(longestCommonSubsequence),
+      restOfThis: new Path(this.path.slice(i, this.length)),
+      restOfOther: new Path(other.path.slice(i, other.length))
+    }
+  }
+
+  reverse () {
+    return new Path(this.path.reverse())
   }
 
   forEach (cb) {

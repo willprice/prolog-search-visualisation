@@ -15,7 +15,6 @@ class GridWorld {
     this.agent = new Agent(config.start)
     this.searchApi = new GridSearchAPI('ws://localhost:4000/api')
     this.agendaUpdateListeners = []
-    this.previousAgenda = null
     this.setupGoalCell()
     this.setupStartCell()
     this.setupSearch()
