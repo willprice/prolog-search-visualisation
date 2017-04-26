@@ -16,12 +16,6 @@ class GridSearchAPI extends SearchAPI {
     })
   }
 
-  search (algorithm) {
-    this.sendCommand('grid:search', {
-      algorithm: algorithm
-    })
-  }
-
 }
 
 export default GridSearchAPI

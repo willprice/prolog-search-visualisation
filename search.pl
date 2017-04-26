@@ -137,7 +137,6 @@ search(SearchConfig, SearchProblem, Agenda, Visited, Path) :-
     search_problem_children(SearchProblem, ChildrenPredicate),
     call(ChildrenPredicate, Current, ChildrenOfCurrent),
     update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
-    format('~p: ~p\n', [Current, NewAgenda]),
     search(SearchConfig, SearchProblem, NewAgenda, UpdatedVisited, Path).
 
 print_agenda_item(AgendaItem) :-

@@ -19,6 +19,8 @@
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_files)).
 :- use_module(library(http/websocket)).
+:- use_module(search_problem).
+:- use_module(search).
 
 
 start_server :-
@@ -69,7 +71,32 @@ api_handler(Payload, ResponseWithId) :-
 
 %% GRID Specific code
 
+:- use_module(grid).
+
+to_json(p(X, Y), _{x: X, y: Y}).
+
+api_handler("search", Args, Response) :-
+    !, % Do not backtrack into the catch all error api_handler
+    debug_api_topic(DebugTopic),
+    atom_string(SearchType, Args.algorithm),
+    debug(DebugTopic, 'Search type ~p', [SearchType]),
+    grid:grid_search_problem(SearchProblem),
+    debug(DebugTopic, 'Search problem ~p', [SearchProblem]),
+    (
+        debug(DebugTopic, 'Starting search', []),
+        search:search(SearchType, SearchProblem, Path),
+        debug(DebugTopic, 'Path ~p', [Path]),
+        maplist(to_json, Path, JsonPath),
+        Response = _{ response: ok, data: JsonPath }
+    );(
+        debug(DebugTopic, 'Not path found', []),
+        Response = _{ response: search_fail, data: null }
+    ),
+    debug(DebugTopic, 'Responding with ~p', [Response]).
+
+
 api_handler("grid:setup", Args, Response) :-
+    !, % Do not backtrack into the catch all error api_handler
     debug_api_topic(DebugTopic),
     debug(DebugTopic, 'Setup grid with ~p', [Args]),
     GridSize = grid_size(Args.size.width,
@@ -78,8 +105,8 @@ api_handler("grid:setup", Args, Response) :-
     Goal = p(Args.goal.x, Args.goal.y),
     grid_setup(GridSize, Start, Goal),
     Response = _{ response: ok, data: null },
-    debug(DebugTopic, 'Responding with ~p', [Response]),
-    !. % Do not backtrack into the catch all error api_handler
+    debug(DebugTopic, 'Responding with ~p', [Response]).
+
 
 api_handler(Command, Args, Response) :-
     debug_api_topic(DebugTopic),

@@ -13,23 +13,28 @@ const gridWorld = new GridWorld(GRID_CONFIG)
 const agent = new Agent(p(1, 1))
 gridWorld.addAgent(agent)
 
-const searchApi = new GridSearchAPI('ws://localhost:4000/api', () => {
-  log('App', 'connected, yay!')
-  searchApi.setupGrid({
-    size: {
-      width: 4,
-      height: 5
-    },
-    start: {
-      x: 1,
-      y: 1
-    },
-    goal: {
-      x: 3,
-      y: 4
-    }
+const searchApi = new GridSearchAPI('ws://localhost:4000/api')
+searchApi.setupConnection()
+  .then(() => {
+    return searchApi.setupGrid({
+      size: {
+        width: 4,
+        height: 5
+      },
+      start: {
+        x: 1,
+        y: 1
+      },
+      goal: {
+        x: 3,
+        y: 4
+      }
+    })
+  }).then(() => {
+    return searchApi.search('bfs')
+  }).then((path) => {
+    log('Search', path)
   })
-})
 
 const gridWorldUI = new GridWorldUI('grid', gridWorld)
 gridWorldUI.render()

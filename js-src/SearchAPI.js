@@ -6,29 +6,33 @@ import log from 'util/log'
 const LOG_TOPIC = 'SearchApi'
 
 class SearchAPI {
-  constructor (rootUrl, onsetup) {
+  constructor (rootUrl) {
     this.rootUrl = rootUrl
-    this.connection = this.setupConnection(onsetup)
+    this.connection = null
     this._nextMessageId = 0
     this.awaitingResponse = new Map()
   }
 
-  setupConnection (onsetup) {
+  setupConnection () {
     log(LOG_TOPIC, 'Setting up search API WebSocket connection')
-    const connection = new WebSocket(this.rootUrl)
-    connection.onerror = (error) => {
-      log(LOG_TOPIC, `Failed to initialise connection to websocket server at URL: ${this.rootUrl}`)
-      log(LOG_TOPIC, error)
-    }
-    connection.onmessage = this.handleMessage.bind(this)
-    connection.onopen = () => {
-      log(LOG_TOPIC, `WebSocket at address ${this.rootUrl} opened`)
-      onsetup()
-    }
-    connection.onclose = () => {
-      log(LOG_TOPIC, `WebSocket at address ${this.rootUrl} closed`)
-    }
-    return connection
+    return new Promise((resolve, reject) => {
+      const connection = new WebSocket(this.rootUrl)
+      connection.onerror = (error) => {
+        const errorMessage = `Failed to initialise connection to websocket server at URL: ${this.rootUrl}`
+        log(LOG_TOPIC, errorMessage)
+        log(LOG_TOPIC, error)
+        reject(errorMessage)
+      }
+      connection.onmessage = this.handleMessage.bind(this)
+      connection.onopen = () => {
+        log(LOG_TOPIC, `WebSocket at address ${this.rootUrl} opened`)
+        resolve()
+      }
+      connection.onclose = () => {
+        log(LOG_TOPIC, `WebSocket at address ${this.rootUrl} closed`)
+      }
+      this.connection = connection
+    })
   }
 
   handleMessage (event) {
@@ -56,6 +60,12 @@ class SearchAPI {
     this.awaitingResponse[messageId] = cb
     this.connection.send(JSON.stringify(payload))
     log(LOG_TOPIC, `Sent ${JSON.stringify(payload)}`)
+  }
+
+  search (algorithm) {
+    this.sendCommand('search', {
+      algorithm: algorithm
+    })
   }
 
   nextMessageId () {
