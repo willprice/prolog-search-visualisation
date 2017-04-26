@@ -114,22 +114,28 @@ combine_agendas(SortedAgenda1, SortedAgenda2, MergedAgendas) :-
     merge(agenda_comparison, SortedAgenda1, SortedAgenda2, MergedAgendas).
 
 search(SearchType, SearchProblem, Path) :-
+    DummyCallback = true,
+    search(SearchType, SearchProblem, DummyCallback, Path).
+
+search(SearchType, SearchProblem, Callback, Path) :-
     search_strategy(SearchType, SearchConfig),
     search_problem_start(SearchProblem, StartPredicate),
     call(StartPredicate, StartNode),
     make_agenda_item([path([StartNode]), g_cost(0), h_cost(0)], AgendaItem),
-    search(SearchConfig, SearchProblem, [AgendaItem], [], Path).
+    search(SearchConfig, SearchProblem, Callback, [AgendaItem], [], Path).
 
 % Search framework
 % ----------------
 
-search(_SearchConfig, SearchProblem, [TopAgendaItem|_], _, Path) :-
+search(_SearchConfig, SearchProblem, Callback, [TopAgendaItem|_], _, Path) :-
+    must_be(ground, Callback),
     agenda_item_path(TopAgendaItem, [Current|PathTailReversed]),
     search_problem_goal(SearchProblem, Goal),
     call(Goal, Current),
     !,
     reverse([Current|PathTailReversed], Path).
-search(SearchConfig, SearchProblem, Agenda, Visited, Path) :-
+search(SearchConfig, SearchProblem, Callback, Agenda, Visited, Path) :-
+    must_be(ground, Callback),
     select(AgendaItem, Agenda, AgendaTail),
     agenda_item_path(AgendaItem, [Current|PathToCurrentReversed]),
     agenda_item_g_cost(AgendaItem, CostToCurrent),
@@ -137,7 +143,8 @@ search(SearchConfig, SearchProblem, Agenda, Visited, Path) :-
     search_problem_children(SearchProblem, ChildrenPredicate),
     call(ChildrenPredicate, Current, ChildrenOfCurrent),
     update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
-    search(SearchConfig, SearchProblem, NewAgenda, UpdatedVisited, Path).
+    catch(call(Callback), Error, print_message(informational, Error)),
+    search(SearchConfig, SearchProblem, Callback, NewAgenda, UpdatedVisited, Path).
 
 print_agenda_item(AgendaItem) :-
     agenda_item_path(AgendaItem, [Head|_Rest]),
