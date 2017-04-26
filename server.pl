@@ -1,3 +1,5 @@
+#!/usr/bin/env swipl
+
 % Instructions
 % =swipl server.pl=
 % =:- start_server.=
@@ -35,7 +37,7 @@ default_port(3000).
                 [priority(1), prefix]).
 :- http_handler(root(api),
                 http_upgrade_to_websocket(api_ws_handler, []),
-                [priority(2), spawn([])]).
+                [priority(0), spawn([])]).
 :- http_handler(root(.),
                 http_404([]),
                 [priority(0), prefix]).
@@ -43,31 +45,46 @@ default_port(3000).
 
 api_ws_handler(WebSocket) :-
     ws_receive(WebSocket, Message, [format(json)]),
-    writeln('Receiving message '),
-    writeln(Message),
+    debug_api_topic(DebugTopic),
+    debug(DebugTopic, 'Receiving message ~p', [Message]),
     ( Message.opcode == close
     -> true
     ; api_handler(Message.data, Response),
       ws_send(WebSocket, json(Response)),
+      debug(DebugTopic, 'The response ~p was sent', [Response]),
       api_ws_handler(WebSocket)
     ).
 
-debug_api_topic('API').
+debug_api_topic('api-server').
 api_handler(Payload, Response) :-
     debug_api_topic(DebugTopic),
     debug(DebugTopic, 'The payload ~p was received', [Payload]),
     api_handler(Payload.command, Payload.args, Response),
-    debug(DebugTopic, 'The response ~p is ready to be sent', [Payload]).
+    debug(DebugTopic, 'The response ~p is ready to be sent', [Response]).
 
-api_handler("setup", Args, Response) :-
-    debug('API-setup', 'Setup called with ~p', [Args]),
-    GridSize = grid_size(Args.grid_size.width,
-                         Args.grid_size.height),
-    StartPosition = p(Args.start_position.x, Args.start_position.y),
+%% GRID Specific code
+
+api_handler("grid:setup", Args, Response) :-
+    debug_api_topic(DebugTopic),
+    debug(DebugTopic, 'Setup grid with ~p', [Args]),
+    GridSize = grid_size(Args.size.width,
+                         Args.size.height),
+    StartPosition = p(Args.start.x, Args.start.y),
     GoalPosition = p(Args.goal.x, Args.goal.y),
     setup(GridSize, StartPosition, GoalPosition),
     Response = _{ response: ok, data: null },
-    debug('API-setup', 'Responding with ~p', [Response]).
+    debug(DebugTopic, 'Responding with ~p', [Response]),
+    !. % Do not backtrack into the catch all error api_handler
+
+api_handler(Command, Args, Response) :-
+    debug_api_topic(DebugTopic),
+    debug(DebugTopic, 'No know handler for command ~p', [Command]),
+    Response = _{ response: error_unknown_command,
+                  data: _{ 
+                    command: Command,
+                    args: Args
+                  }
+                }.
 
 
 setup(GridSize, StartPosition, GoalPosition) :-
