@@ -134,34 +134,34 @@ search(SearchType, SearchProblem, Path) :-
 
 :- meta_predicate search(+, +, 2, -).
 search(SearchType, SearchProblem, Callback, Path) :-
-    search_strategy(SearchType, SearchConfig),
+    search_strategy(SearchType, SearchStrategy),
     search_problem_start(SearchProblem, StartPredicate),
     call(StartPredicate, StartNode),
     make_agenda_item([path([StartNode]), g_cost(0), h_cost(0), depth(0)], AgendaItem),
-    search(SearchConfig, SearchProblem, Callback, 0, [AgendaItem], [], Path).
+    search(SearchStrategy, SearchProblem, Callback, 0, [AgendaItem], [], Path).
 
 % Search framework
 % ----------------
 
-search(_SearchConfig, SearchProblem, Callback, _Depth, [TopAgendaItem|_], _, Path) :-
+search(_SearchStrategy, SearchProblem, Callback, _Depth, [TopAgendaItem|_], _, Path) :-
     agenda_item_path(TopAgendaItem, [Current|PathTailReversed]),
     search_problem_goal(SearchProblem, Goal),
     call(Goal, Current),
     !,
     reverse([Current|PathTailReversed], Path).
-search(SearchConfig, SearchProblem, Callback, Depth, Agenda, Visited, Path) :-
+search(SearchStrategy, SearchProblem, Callback, Depth, Agenda, Visited, Path) :-
     select(AgendaItem, Agenda, AgendaTail),
     agenda_item_path(AgendaItem, [Current|PathToCurrentReversed]),
     agenda_item_g_cost(AgendaItem, CostToCurrent),
     UpdatedVisited = [Current|Visited],
     search_problem_children(SearchProblem, ChildrenPredicate),
     call(ChildrenPredicate, Current, ChildrenOfCurrent),
-    update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    update_agenda(SearchStrategy, SearchProblem, Current, CostToCurrent, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
     debug('search', 'Calling search callback ~p', [Callback]),
     catch(call(Callback, Current, NewAgenda), Error, print_message(informational, Error)),
     debug('search', 'Called search callback ~p', [Callback]),
     NewDepth #= Depth + 1,
-    search(SearchConfig, SearchProblem, Callback, NewDepth, NewAgenda, UpdatedVisited, Path).
+    search(SearchStrategy, SearchProblem, Callback, NewDepth, NewAgenda, UpdatedVisited, Path).
 
 print_agenda_item(AgendaItem) :-
     agenda_item_path(AgendaItem, [Head|_Rest]),
@@ -193,11 +193,11 @@ agenda_comparison(Delta, AgendaItem1, AgendaItem2) :-
     (F1 #> F2 -> Delta = '>'
     ;F1 #=< F2 -> Delta = '<'). % We don't let Delta be '=' since this will merge the items on the agenda.
 
-update_agenda(SearchConfig, SearchProblem, Current, CostToCurrent, Agenda, Visited, Children, Path, NewAgenda) :-
+update_agenda(SearchStrategy, SearchProblem, Current, CostToCurrent, Agenda, Visited, Children, Path, NewAgenda) :-
     maplist(\AgendaItem^Node^(agenda_item_path(AgendaItem, [Node|_])), Agenda, NodesOnAgenda),
     exclude(\Child^(member(Child, NodesOnAgenda); member(Child, Visited)), Children, UnseenChildren),
-    search_strategy_cost(SearchConfig, Cost_4),
-    search_strategy_combine_agenda(SearchConfig, CombineAgendas_3),
+    search_strategy_cost(SearchStrategy, Cost_4),
+    search_strategy_combine_agenda(SearchStrategy, CombineAgendas_3),
     search_problem_g(SearchProblem, G),
     search_problem_h(SearchProblem, H),
     maplist(\Child^AgendaItem^(
