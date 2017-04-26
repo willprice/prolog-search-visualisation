@@ -41,11 +41,7 @@ framework solve the problem.
 @license MIT
 */
 :- module(search,
-        [ search_depth_first/2
-        , search_breadth_first/2
-        , search_best_first/2
-        , search_a/2
-        , search/3
+        [ search/3
         ]).
 
 
@@ -69,26 +65,25 @@ framework solve the problem.
 
 % Search strategy predicates
 % --------------------------
-
-search_config_dfs(Config) :-
+search_config(dfs, Config) :-
     make_search_config([
         combine_agenda(combine_agenda_dfs),
         cost(cost_nop)
     ], Config).
 
-search_config_bfs(Config) :-
+search_config(bfs, Config) :-
     make_search_config([
         combine_agenda(combine_agenda_bfs),
         cost(cost_nop)
     ], Config).
 
-search_config_best_first(Config) :-
+search_config(best_first, Config) :-
     make_search_config([
         combine_agenda(combine_agendas),
         cost(cost_h)
     ], Config).
 
-search_config_a(Config) :-
+search_config(a, Config) :-
     make_search_config([
         combine_agenda(combine_agendas),
         cost(cost_a)
@@ -118,30 +113,16 @@ combine_agenda_bfs(OldAgenda, ChildrenAgenda, CombinedAgenda) :-
 combine_agendas(SortedAgenda1, SortedAgenda2, MergedAgendas) :-
     merge(agenda_comparison, SortedAgenda1, SortedAgenda2, MergedAgendas).
 
-search_depth_first(SearchProblem, Path) :-
-    search_config_dfs(Config),
-    search(Config, SearchProblem, Path).
-
-search_breadth_first(SearchProblem, Path) :-
-    search_config_bfs(Config),
-    search(Config, SearchProblem, Path).
-
-search_best_first(SearchProblem, Path) :-
-    search_config_best_first(Config),
-    search(Config, SearchProblem, Path).
-
-search_a(SearchProblem, Path) :-
-    search_config_dfs(Config),
-    search(Config, SearchProblem, Path).
-
-% Search framework
-% ----------------
-
-search(SearchConfig, SearchProblem, Path) :-
+search(SearchType, SearchProblem, Path) :-
+    search_config(SearchType, SearchConfig),
     search_problem_start(SearchProblem, StartPredicate),
     call(StartPredicate, StartNode),
     make_agenda_item([path([StartNode]), g_cost(0), h_cost(0)], AgendaItem),
     search(SearchConfig, SearchProblem, [AgendaItem], [], Path).
+
+% Search framework
+% ----------------
+
 search(_SearchConfig, SearchProblem, [TopAgendaItem|_], _, Path) :-
     agenda_item_path(TopAgendaItem, [Current|PathTailReversed]),
     search_problem_goal(SearchProblem, Goal),
