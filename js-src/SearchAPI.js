@@ -53,30 +53,32 @@ class SearchAPI {
     }
   }
 
-  sendCommand (command, args, cb) {
-    let messageId = this.newMessageId()
-    let payload = {
-      command: command,
-      args: args,
-      id: messageId
-    }
-    this.awaitingResponse[messageId] = cb
-    this.connection.send(JSON.stringify(payload))
-    log(LOG_TOPIC, `Sent ${JSON.stringify(payload)}`)
+  sendCommand (command, args) {
+    return new Promise((resolve) => {
+      let messageId = this.newMessageId()
+      let payload = {
+        command: command,
+        args: args,
+        id: messageId
+      }
+      this.awaitingResponse[messageId] = resolve
+      this.connection.send(JSON.stringify(payload))
+      log(LOG_TOPIC, `Sent ${JSON.stringify(payload)}`)
+    })
   }
 
-  search (algorithm, cb) {
-    this.sendCommand('search', {
+  search (algorithm) {
+    return this.sendCommand('search', {
       algorithm: algorithm
-    }, cb)
+    })
   }
 
   step () {
-    this.sendCommand('step', null)
+    return this.sendCommand('step')
   }
 
   reset () {
-    this.sendCommand('reset', null)
+    return this.sendCommand('reset')
   }
 
   newMessageId () {

@@ -1,17 +1,19 @@
 'use strict'
 import { CELL_UI_CONFIG } from 'ui/gridConfig'
 import Konva from 'konva'
+import CellEvents from 'events/CellEvents'
+import promisify from 'util/promises'
 
 class CellUI {
   constructor (layer, animationQueue, cell) {
     this.cell = cell
     this.animationQueue = animationQueue
-    this.cell.addListener(this)
+    this.cell.pubSub.addSubscriber(CellEvents.stateChange, promisify(this.cellUpdateNotification.bind(this)))
     this.layer = layer
-    this.rect = this.draw()
+    this.rect = this.render()
   }
 
-  draw () {
+  render () {
     let width = CELL_UI_CONFIG.size
     let height = CELL_UI_CONFIG.size
 
@@ -29,6 +31,25 @@ class CellUI {
     })
     this.layer.add(rect)
     return rect
+  }
+
+  get canvasPosition () {
+    return this.rect.position()
+  }
+
+  get canvasHeight () {
+    return this.rect.height()
+  }
+
+  get canvasWidth () {
+    return this.rect.width()
+  }
+
+  get canvasCenter () {
+    return {
+      x: this.canvasPosition.x + this.canvasWidth / 2,
+      y: this.canvasPosition.y + this.canvasHeight / 2
+    }
   }
 
   _xFromCell (cell) {
@@ -53,7 +74,7 @@ class CellUI {
     })
   }
 
-  cellUpdateNotification (cell) {
+  cellUpdateNotification () {
     this.update()
   }
 }

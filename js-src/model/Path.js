@@ -37,7 +37,6 @@ class Path {
   }
 
   forEach (cb) {
-    console.log(this.path)
     for (let i = 0; i < this.length; i++) {
       cb(this.at(i))
     }

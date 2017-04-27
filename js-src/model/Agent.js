@@ -1,10 +1,14 @@
 'use strict'
 import Path from './Path'
+import AgentEvents from 'events/AgentEvents'
+import PubSub from 'util/PubSub'
 
 class Agent {
   constructor (position) {
     this._position = position
-    this.positionListeners = []
+    this._start = position
+    this._goal = undefined
+    this.pubSub = new PubSub(AgentEvents)
     this.world = null
     this.previousPath = new Path([])
   }
@@ -17,8 +21,24 @@ class Agent {
     return this._position
   }
 
-  addListener (listener) {
-    this.positionListeners.push(listener)
+  get startPosition () {
+    return this._start
+  }
+
+  set startPosition (position) {
+    this._start = position
+    this._position = position
+    this.pubSub.notifySubscribers(AgentEvents.startPositionChanged, position)
+    this.pubSub.notifySubscribers(AgentEvents.reset, position)
+  }
+
+  set goal (position) {
+    this._goal = position
+    this.pubSub.notifySubscribers(AgentEvents.goalPositionChanged, this._goal)
+  }
+
+  get goal () {
+    return this._goal
   }
 
   /**
@@ -29,22 +49,12 @@ class Agent {
    */
   followPath (path) {
     let longestCommonSubsequence = path.longestCommonSubsequence(this.previousPath)
-    console.log(longestCommonSubsequence)
-    this._backtrack(longestCommonSubsequence.restOfOther)
+    this._backtrackPath(longestCommonSubsequence.restOfOther)
     if (longestCommonSubsequence.common.length > 0) {
       this.move(longestCommonSubsequence.common.last)
     }
     this._followPath(longestCommonSubsequence.restOfThis)
     this.previousPath = path
-  }
-
-  /**
-   * Backtrack over path iterating from the end of the path to the beginning
-   * @param path
-   * @private
-   */
-  _backtrack (path) {
-    this._followPath(path.reverse())
   }
 
   /**
@@ -59,16 +69,32 @@ class Agent {
     })
   }
 
-  move (position) {
-    this._position = position
-    this.notifyListeners()
+  /**
+   * Backtrack over path iterating from the end of the path to the beginning
+   * @param path
+   * @private
+   */
+  _backtrackPath (path) {
+    path.reverse().forEach((position) => {
+      this.backtrack(position)
+    })
   }
 
-  notifyListeners () {
-    for (const listener of this.positionListeners) {
-      listener.agentUpdateNotification(this)
-    }
+  reset () {
+    this._position = this.startPosition
+    this.pubSub.notifySubscribers(AgentEvents.reset, this._position)
   }
+
+  backtrack (position) {
+    this._position = position
+    this.pubSub.notifySubscribers(AgentEvents.backtrack, position)
+  }
+
+  move (position) {
+    this._position = position
+    this.pubSub.notifySubscribers(AgentEvents.move)
+  }
+
 }
 
 export default Agent
