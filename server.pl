@@ -75,14 +75,21 @@ api_handler(Payload, ResponseWithId, WebSocket) :-
 :- use_module(grid).
 
 
-search_callback(WebSocket, MessageId, CurrentItem, Agenda) :-
-    debug('api-server', 'Current: ~p', [CurrentItem]),
-    debug('api-server', 'Agenda: ~p', [Agenda]),
+search_callback(WebSocket, MessageId, Current, Children, Agenda) :-
+    debug('search-callback', 'Current: ~p', [Current]),
+    debug('search-callback', 'Children: ~p', [Children]),
+    debug('search-callback', 'Agenda: ~p', [Agenda]),
+    to_json(Current, CurrentJson),
+    to_json(Children, ChildrenJson),
     to_json(Agenda, AgendaJson),
     Response = _{
         response: ok,
         id: MessageId,
-        data: AgendaJson
+        data: _{
+            current: CurrentJson,
+            agenda: AgendaJson,
+            children: ChildrenJson
+        }
     },
     ws_send(WebSocket, json(Response)),
     ws_receive(WebSocket, Message, [format(json)]),
@@ -110,7 +117,7 @@ api_handler("search", Args, MessageId, WebSocket, Response) :-
     debug(DebugTopic, 'Responding with ~p', [Response]).
 
 
-api_handler("step", _Args, MessageId, _WebSocket, Response) :-
+api_handler("step", _Args, _MessageId, _WebSocket, Response) :-
     Response = _{ response: error_invalid_command,
                   data: "'step' Can only be used whilst a search is being performed"
                 }.

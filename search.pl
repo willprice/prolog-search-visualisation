@@ -58,7 +58,8 @@ framework solve the problem.
 
 :- record search_strategy(
        combine_agenda:callable,
-       cost:callable
+       cost:callable,
+       max_depth:integer=1000000
    ).
 :- record agenda_item(
        path:list,
@@ -129,10 +130,10 @@ combine_agendas(SortedAgenda1, SortedAgenda2, MergedAgendas) :-
     merge(agenda_comparison, SortedAgenda1, SortedAgenda2, MergedAgendas).
 
 search(SearchType, SearchProblem, Path) :-
-    DummyCallback = \_^_^(true),
+    DummyCallback = \_^_^_^(true),
     search(SearchType, SearchProblem, DummyCallback, Path).
 
-:- meta_predicate search(+, +, 2, -).
+:- meta_predicate search(+, +, 3, -).
 search(SearchType, SearchProblem, Callback, Path) :-
     search_strategy(SearchType, SearchStrategy),
     search_problem_start(SearchProblem, StartPredicate),
@@ -143,7 +144,7 @@ search(SearchType, SearchProblem, Callback, Path) :-
 % Search framework
 % ----------------
 
-search(_SearchStrategy, SearchProblem, Callback, _Depth, [TopAgendaItem|_], _, Path) :-
+search(_SearchStrategy, SearchProblem, _Callback, _Depth, [TopAgendaItem|_], _, Path) :-
     agenda_item_path(TopAgendaItem, [Current|PathTailReversed]),
     search_problem_goal(SearchProblem, Goal),
     call(Goal, Current),
@@ -156,9 +157,10 @@ search(SearchStrategy, SearchProblem, Callback, Depth, Agenda, Visited, Path) :-
     UpdatedVisited = [Current|Visited],
     search_problem_children(SearchProblem, ChildrenPredicate),
     call(ChildrenPredicate, Current, ChildrenOfCurrent),
-    update_agenda(SearchStrategy, SearchProblem, Current, CostToCurrent, AgendaTail, UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
+    update_agenda(SearchStrategy, SearchProblem, Current, CostToCurrent, AgendaTail,
+                  UpdatedVisited, ChildrenOfCurrent, [Current|PathToCurrentReversed], NewAgenda),
     debug('search', 'Calling search callback ~p', [Callback]),
-    catch(call(Callback, Current, NewAgenda), Error, print_message(informational, Error)),
+    call(Callback, Current, ChildrenOfCurrent, NewAgenda),
     debug('search', 'Called search callback ~p', [Callback]),
     NewDepth #= Depth + 1,
     search(SearchStrategy, SearchProblem, Callback, NewDepth, NewAgenda, UpdatedVisited, Path).
