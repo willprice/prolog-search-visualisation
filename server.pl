@@ -90,7 +90,7 @@ search_callback(WebSocket, MessageId, CurrentItem, Agenda) :-
 
 agenda_api_handler("step").
 agenda_api_handler("reset") :-
-    throw(exception(reset_search, "User cancelled search")).
+    throw(error(reset_search)).
 
 
 api_handler("search", Args, MessageId, WebSocket, Response) :-
@@ -101,8 +101,19 @@ api_handler("search", Args, MessageId, WebSocket, Response) :-
     grid:grid_search_problem(SearchProblem),
     debug(DebugTopic, 'Search problem ~p', [SearchProblem]),
     debug(DebugTopic, 'Starting search', []),
-    search(SearchType, SearchProblem, search_callback(WebSocket, MessageId), _),
+    catch(search(SearchType, SearchProblem, search_callback(WebSocket, MessageId), Path), error(reset_search), true),
+    maplist(to_json, Path, PathJson),
+    Response = _{
+        response: search_complete,
+        path: PathJson
+    },
     debug(DebugTopic, 'Responding with ~p', [Response]).
+
+
+api_handler("step", _Args, MessageId, _WebSocket, Response) :-
+    Response = _{ response: error_invalid_command,
+                  data: "'step' Can only be used whilst a search is being performed"
+                }.
 
 
 api_handler("grid:setup", Args, _MessageId, _WebSocket, Response) :-
