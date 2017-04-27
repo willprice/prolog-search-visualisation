@@ -34,7 +34,7 @@ class GridWorld {
   agendaUpdateNotification (response) {
     let responseCode = response.response
     if (responseCode === 'ok') {
-      let agenda = response.data
+      let agenda = response.data.agenda
       this.updateGrid(agenda)
       for (let listener of this.agendaUpdateListeners) {
         listener.agendaUpdateNotification(this)
