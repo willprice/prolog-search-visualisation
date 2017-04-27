@@ -38,7 +38,6 @@ class AgentUI {
   }
 
   update () {
-    // TODO: Figure out how to stage this transformation
     this.animationQueue.addTween({
       node: this.circle,
       x: this._xFromAgent(),

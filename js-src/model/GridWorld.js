@@ -13,6 +13,7 @@ class GridWorld {
     this.config = config
     this.grid = GridWorld.createGrid(config.size.width, config.size.height)
     this.agent = new Agent(config.start)
+    this.agent.addListener(this)
     this.searchApi = new GridSearchAPI('ws://localhost:4000/api')
     this.agendaUpdateListeners = []
     this.setupGoalCell()
