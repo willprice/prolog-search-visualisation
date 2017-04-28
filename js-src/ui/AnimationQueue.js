@@ -16,12 +16,17 @@ class AnimationQueue {
       let executedTweenPromise = new Promise((resolve) => {
         let tweenConfig = this.pendingTweens.shift()
         tweenConfig.onFinish = resolve
+        tweenConfig.duration = 0.1
         let tween = new Konva.Tween(tweenConfig)
         tween.play()
       })
       executedTweenPromises.push(executedTweenPromise)
     }
     return Promise.all(executedTweenPromises)
+  }
+
+  empty () {
+    this.pendingTweens = []
   }
 }
 

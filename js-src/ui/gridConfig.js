@@ -9,6 +9,7 @@ const CELL_UI_CONFIG = {
 }
 CELL_UI_CONFIG.color[CellStates.default] = '#eee'
 CELL_UI_CONFIG.color[CellStates.visited] = '#0ab'
+CELL_UI_CONFIG.color[CellStates.path] = '#449'
 CELL_UI_CONFIG.color[CellStates.goal] = '#f44'
 
 const AGENT_UI_CONFIG = {

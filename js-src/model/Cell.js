@@ -5,6 +5,7 @@ import PubSub from 'util/PubSub'
 const CellStates = {
   default: Symbol('cell-state-default'),
   visited: Symbol('cell-state-visited'),
+  path: Symbol('cell-state-path'),
   goal: Symbol('cell-state-goal'),
   start: Symbol('cell-state-start')
 }
@@ -17,11 +18,15 @@ class Cell {
   }
 
   visited () {
-    this._updateState(CellStates.visited)
+    this._updateState(CellStates.path)
   }
 
   reset () {
     this._updateState(CellStates.default)
+  }
+
+  backtrack () {
+    this._updateState(CellStates.visited)
   }
 
   goal () {

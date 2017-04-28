@@ -1,17 +1,14 @@
 'use strict'
-import Path from './Path'
 import AgentEvents from 'events/AgentEvents'
 import PubSub from 'util/PubSub'
-import { p } from './Position'
 
 class Agent {
-  constructor (position) {
+  constructor (position, goal) {
     this._position = position
     this._start = position
-    this._goal = p(1, 1)
+    this._goal = goal
     this.pubSub = new PubSub(AgentEvents)
     this.world = null
-    this.previousPath = new Path([])
   }
 
   setWorld (world) {

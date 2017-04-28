@@ -60,7 +60,9 @@ class GridWorldController {
     return new Promise((resolve) => {
       this.disableSearchControls()
       this.enableSetupControls()
-      this.gridWorld.reset().then(resolve)
+      this.gridWorld.reset().then(() => {
+        this.gridWorldUI.animationQueue.empty()
+      })
     })
   }
 

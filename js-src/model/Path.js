@@ -28,7 +28,7 @@ class Path {
     return {
       common: new Path(longestCommonSubsequence),
       restOfThis: new Path(this.path.slice(i, this.length)),
-      restOfOther: new Path(other.path.slice(i, other.length))
+      restOfThat: new Path(other.path.slice(i, other.length))
     }
   }
 

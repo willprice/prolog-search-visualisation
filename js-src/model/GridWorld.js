@@ -33,6 +33,7 @@ class GridWorld {
     this.agent.pubSub.addSubscriber(AgentEvents.goalPositionChanged, this.onSetGoalPosition.bind(this))
     this.searchApi = new GridSearchAPI('ws://localhost:4000/api')
     this.searchApi.pubSub.addSubscriber(SearchEvents.searchComplete, this.onSearchComplete.bind(this))
+    this.previousPath = new Path([])
   }
 
   onSearchComplete (response) {
@@ -111,6 +112,7 @@ class GridWorld {
 
   _resetState () {
     this.agent.reset()
+    this.previousPath = new Path([])
     for (let y = 0; y < this.grid.length; y++) {
       let row = this.grid[y]
       for (let x = 0; x < row.length; x++) {
@@ -136,23 +138,37 @@ class GridWorld {
   updateGrid (agenda) {
     let bestAgendaItem = agenda[0]
     let path = new Path(bestAgendaItem.path.reverse())
+
+    let {
+      restOfThis: backtrackPath,
+      restOfThat: newPath
+    } = this.previousPath.longestCommonSubsequence(path)
+
     let currentMovePromise = new Promise((resolve) => resolve())
-    path.forEach((position) => {
+    console.log('Backtracking over path: ', backtrackPath)
+
+    backtrackPath.reverse().forEach((position) => {
+      this.agent.backtrack(position)
+      this.backtrackOverCell(this.cell(this.agent.position))
+    })
+
+    console.log('Visiting new path: ', newPath)
+    newPath.forEach((position) => {
       this.agent.move(position)
       this.updateCellUnderAgent()
-      currentMovePromise.then(() => {
-        return this.pubSub.notifySubscribers(GridEvents.agent_moved, {
-          agent: this.agent,
-          position: position
-        })
-      })
     })
+
     return currentMovePromise.then(() => {
+      this.previousPath = path
       this.pubSub.notifySubscribers(GridEvents.agent_path_followed, {
         agent: this.agent,
         path: path
       })
     })
+  }
+
+  backtrackOverCell (cell) {
+    return cell.backtrack()
   }
 
   cellUnderAgent (agent) {
