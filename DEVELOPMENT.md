@@ -66,5 +66,5 @@ There are some tests in `search.plt` which can be run using `make test`
 
 ### Docs
 
-There are some API docs, they can be viewed by running `swipl -l entrypoint.pl
--g 'doc_server(5000), portray_text(true)'` and visiting http://localhost:5000.
+There are some API docs, they can be viewed by running `swipl -f doc_server.pl`
+and visiting http://localhost:5000
