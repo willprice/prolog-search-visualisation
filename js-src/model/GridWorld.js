@@ -25,6 +25,7 @@ class GridWorld {
       width: 4,
       height: 4
     }
+    this.searchType = 'bfs'
     this.state = GridWorldState.setup
     this.pubSub = new PubSub(GridEvents)
     this.gridSize = this._gridSize
@@ -69,7 +70,7 @@ class GridWorld {
       })
     }).then(() => {
       log(DEBUG_TOPIC, 'Initialising search')
-      return this.searchApi.search('bfs')
+      return this.searchApi.search(this.searchType)
     }).catch((error) => {
       log(DEBUG_TOPIC, 'Error: ', error)
     })

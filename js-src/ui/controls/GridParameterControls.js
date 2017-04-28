@@ -1,6 +1,7 @@
 'use strict'
 import { Button, ButtonEvents } from 'ui/controls/Button'
 import { Slider, SliderEvents } from 'ui/controls/Slider'
+import { Dropdown, DropdownEvents } from './Dropdown'
 
 class GridParameterControls {
   constructor (element) {
@@ -10,6 +11,7 @@ class GridParameterControls {
     this.resetButton = new Button(element.querySelector('.reset-button'), false)
     this.heightSlider = new Slider(element.querySelector('.height-slider'), 1, 20, 4)
     this.widthSlider = new Slider(element.querySelector('.width-slider'), 1, 20, 4)
+    this.algorithmDropdown = new Dropdown(element.querySelector('select'), true)
   }
 
   addStepSubscriber (cb) {
@@ -18,6 +20,10 @@ class GridParameterControls {
 
   addResetSubscriber (cb) {
     this.resetButton.pubSub.addSubscriber(ButtonEvents.press, cb)
+  }
+
+  addAlgorithmChangeSubscriber (cb) {
+    this.algorithmDropdown.pubSub.addSubscriber(DropdownEvents.selectionChanged, cb)
   }
 
   addGridSizeSubscriber (cb) {

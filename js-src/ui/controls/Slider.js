@@ -23,6 +23,14 @@ class Slider {
     this.pubSub.notifySubscribers(SliderEvents.change, this.value)
   }
 
+  enable () {
+    this.element.disabled = false
+  }
+
+  disable () {
+    this.element.disabled = true
+  }
+
   get value () {
     return parseInt(this.element.value)
   }

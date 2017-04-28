@@ -20,12 +20,14 @@ class GridWorldController {
     this.gridParameterControls.addStepSubscriber(this.onStep.bind(this))
     this.gridParameterControls.addResetSubscriber(this.onReset.bind(this))
     this.gridParameterControls.addGridSizeSubscriber(this.onGridSizeChange.bind(this))
+    this.gridParameterControls.addAlgorithmChangeSubscriber(this.onAlgorithmChange.bind(this))
     this.gridWorld.pubSub.addSubscriber(GridEvents.searchComplete, this.onSearchComplete.bind(this))
   }
 
   onStart () {
     return new Promise((resolve) => {
       this.gridWorld.startSearch().then(() => {
+        this.disableSetupControls()
         this.enableSearchControls()
         this.gridWorldUI.disableCellInteractions()
       }).then(resolve)
@@ -56,8 +58,15 @@ class GridWorldController {
   onReset () {
     return new Promise((resolve) => {
       this.disableSearchControls()
-      this.gridWorldUI.enableCellInteractions()
+      this.enableSetupControls()
       this.gridWorld.reset().then(resolve)
+    })
+  }
+
+  onAlgorithmChange (algorithmType) {
+    return new Promise((resolve) => {
+      this.gridWorld.searchType = algorithmType
+      resolve()
     })
   }
 
@@ -72,6 +81,20 @@ class GridWorldController {
     this.gridWorld.setAgentStartPosition(cell)
   }
 
+  disableSetupControls () {
+    this.gridWorldUI.disableCellInteractions()
+    this.gridParameterControls.algorithmDropdown.disable()
+    this.gridParameterControls.heightSlider.disable()
+    this.gridParameterControls.widthSlider.disable()
+  }
+
+  enableSetupControls () {
+    this.gridWorldUI.enableCellInteractions()
+    this.gridParameterControls.algorithmDropdown.enable()
+    this.gridParameterControls.heightSlider.enable()
+    this.gridParameterControls.widthSlider.enable()
+  }
+
   enableSearchControls () {
     this.gridParameterControls.startButton.disable()
     this.gridParameterControls.stepButton.enable()
@@ -80,8 +103,8 @@ class GridWorldController {
 
   disableSearchControls () {
     this.gridParameterControls.startButton.enable()
-    this.gridParameterControls.stepButton.disable()
     this.gridParameterControls.resetButton.disable()
+    this.disableStepControl()
   }
 
   disableStepControl () {
