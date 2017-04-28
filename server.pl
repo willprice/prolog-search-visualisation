@@ -75,29 +75,34 @@ api_handler(Payload, ResponseWithId, WebSocket) :-
 :- use_module(grid).
 
 
-search_callback(WebSocket, MessageId, Current, Children, Agenda) :-
+search_callback(WebSocket, _, Current, Children, Agenda) :-
     debug('search-callback', 'Current: ~p', [Current]),
     debug('search-callback', 'Children: ~p', [Children]),
     debug('search-callback', 'Agenda: ~p', [Agenda]),
     to_json(Current, CurrentJson),
     to_json(Children, ChildrenJson),
     to_json(Agenda, AgendaJson),
+    debug('search-callback', 'Waiting for command', []),
+    ws_receive(WebSocket, Message, [format(json)]),
+    debug('search-callback', 'Received message ~p', [Message]),
+    agenda_api_handler(Message.data.command),
     Response = _{
         response: ok,
-        id: MessageId,
+        id: Message.data.id,
         data: _{
             current: CurrentJson,
             agenda: AgendaJson,
             children: ChildrenJson
         }
     },
-    ws_send(WebSocket, json(Response)),
-    ws_receive(WebSocket, Message, [format(json)]),
-    agenda_api_handler(Message.data.command).
+    debug('search-callback', 'Sending response ~p', [Response]),
+    ws_send(WebSocket, json(Response)).
 
 agenda_api_handler("step").
 agenda_api_handler("reset") :-
     throw(error(reset_search)).
+agenda_api_handler(Command) :-
+    debug('search-callback', 'Unknown command ~p', [Command]).
 
 
 api_handler("search", Args, MessageId, WebSocket, Response) :-
@@ -107,6 +112,12 @@ api_handler("search", Args, MessageId, WebSocket, Response) :-
     debug(DebugTopic, 'Search type ~p', [SearchType]),
     grid:grid_search_problem(SearchProblem),
     debug(DebugTopic, 'Search problem ~p', [SearchProblem]),
+    SearchStartMessage = _{
+        response: ok,
+        id: MessageId,
+        data: null
+    },
+    ws_send(WebSocket, json(SearchStartMessage)),
     debug(DebugTopic, 'Starting search', []),
     catch(search(SearchType, SearchProblem, search_callback(WebSocket, MessageId), Path), error(reset_search), true),
     maplist(to_json, Path, PathJson),
