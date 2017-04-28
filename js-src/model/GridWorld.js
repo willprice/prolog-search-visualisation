@@ -28,8 +28,8 @@ class GridWorld {
     this.searchType = 'bfs'
     this.state = GridWorldState.setup
     this.pubSub = new PubSub(GridEvents)
-    this.gridSize = this._gridSize
     this.agent = new Agent(p(1, 1))
+    this.gridSize = this._gridSize
     this.agent.pubSub.addSubscriber(AgentEvents.goalPositionChanged, this.onSetGoalPosition.bind(this))
     this.searchApi = new GridSearchAPI('ws://localhost:4000/api')
     this.searchApi.pubSub.addSubscriber(SearchEvents.searchComplete, this.onSearchComplete.bind(this))
@@ -45,7 +45,9 @@ class GridWorld {
   }
 
   onSetGoalPosition (oldGoalPosition, newGoalPosition) {
-    this.cell(oldGoalPosition).reset()
+    if (oldGoalPosition.x <= this._gridSize.width && oldGoalPosition.y <= this._gridSize.height) {
+      this.cell(oldGoalPosition).reset()
+    }
     this.cell(newGoalPosition).goal()
     return new Promise((resolve) => resolve())
   }
@@ -54,6 +56,8 @@ class GridWorld {
     this._gridSize = gridSize
     this.grid = GridWorld.createGrid(gridSize.width, gridSize.height)
     this.pubSub.notifySubscribers(GridEvents.grid_size_change, gridSize)
+    this.agent.goal = p(gridSize.width, gridSize.height)
+    this.agent.startPosition = p(1, 1)
   }
 
   setAgentStartPosition (cell) {

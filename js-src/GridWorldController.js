@@ -22,6 +22,7 @@ class GridWorldController {
     this.gridParameterControls.addGridSizeSubscriber(this.onGridSizeChange.bind(this))
     this.gridParameterControls.addAlgorithmChangeSubscriber(this.onAlgorithmChange.bind(this))
     this.gridWorld.pubSub.addSubscriber(GridEvents.searchComplete, this.onSearchComplete.bind(this))
+    this.gridWorld.agent.goal = p(1, 1)
   }
 
   onStart () {
