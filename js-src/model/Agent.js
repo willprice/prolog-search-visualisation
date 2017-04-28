@@ -30,7 +30,6 @@ class Agent {
     this._start = position
     this._position = position
     this.pubSub.notifySubscribers(AgentEvents.startPositionChanged, position)
-    this.pubSub.notifySubscribers(AgentEvents.reset, position)
   }
 
   set goal (position) {
@@ -43,58 +42,19 @@ class Agent {
     return this._goal
   }
 
-  /**
-   * We visit a new path by backtracking to the start node and following the new path,
-   * If the new path and previous path share a common subsequence from the beginning
-   * of the paths, then we only back track to the latest common ancestor
-   * @param path
-   */
-  followPath (path) {
-    let longestCommonSubsequence = path.longestCommonSubsequence(this.previousPath)
-    this._backtrackPath(longestCommonSubsequence.restOfOther)
-    if (longestCommonSubsequence.common.length > 0) {
-      this.move(longestCommonSubsequence.common.last)
-    }
-    this._followPath(longestCommonSubsequence.restOfThis)
-    this.previousPath = path
-  }
-
-  /**
-   * Follow path blindly, do not perform any backtracking, we simply execute move for
-   * each position in path.
-   * @param path
-   * @private
-   */
-  _followPath (path) {
-    path.forEach((position) => {
-      this.move(position)
-    })
-  }
-
-  /**
-   * Backtrack over path iterating from the end of the path to the beginning
-   * @param path
-   * @private
-   */
-  _backtrackPath (path) {
-    path.reverse().forEach((position) => {
-      this.backtrack(position)
-    })
-  }
-
   reset () {
-    this._position = this.startPosition
-    this.pubSub.notifySubscribers(AgentEvents.reset, this._position)
+    this._position = this._start
+    return this.pubSub.notifySubscribers(AgentEvents.reset, this._position)
   }
 
   backtrack (position) {
     this._position = position
-    this.pubSub.notifySubscribers(AgentEvents.backtrack, position)
+    return this.pubSub.notifySubscribers(AgentEvents.backtrack, position)
   }
 
   move (position) {
     this._position = position
-    this.pubSub.notifySubscribers(AgentEvents.move)
+    return this.pubSub.notifySubscribers(AgentEvents.move)
   }
 
 }
