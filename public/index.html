@@ -16,26 +16,35 @@
 
 
 <div class="grid-parameter-controls">
-  <button class="start-button">Start</button>
-  <button class="step-button">Step</button>
-  <button class="reset-button">Reset</button>
-  <label>
-      Algorithm
-    <select name="algorithm">
-      <option value="bfs">Breadth first</option>
-      <option value="dfs">Depth first</option>
-      <option value="best_first">Best first</option>
-      <option value="a">A*</option>
-    </select>
-  </label>
-  <label>
-    Height:
-    <input type="range" class="height-slider">
-  </label>
-  <label>
-    Width:
-    <input type="range" class="width-slider">
-  </label>
+  <div class="row">
+    <button class="start-button">Start</button>
+    <button class="step-button">Step</button>
+    <button class="reset-button">Reset</button>
+  </div>
+  <div class="row">
+    <div class="control-element">
+      <label>
+        Algorithm
+        <select name="algorithm">
+          <option value="bfs">Breadth first</option>
+          <option value="dfs">Depth first</option>
+          <option value="best_first">Best first</option>
+          <option value="a">A*</option>
+        </select>
+      </label>
+    </div>
+    <div class="control-element">
+      <label>
+        Height:<br>
+        <input type="range" class="height-slider">
+      </label>
+    </div>
+    <div class="control-element">
+      <label>
+        Width:<br>
+        <input type="range" class="width-slider">
+      </label>
+    </div>
 </div>
 <div id="grid-container">
   <div id="grid"></div>
