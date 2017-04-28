@@ -1,6 +1,6 @@
 'use strict'
 import { CELL_UI_CONFIG } from 'ui/gridConfig'
-import CellUI from 'ui/CellUI'
+import CellUI, { CellUIEvents as CellUIEvenets } from 'ui/CellUI'
 import { AgentUI, AgentUIEvents } from 'ui/AgentUI'
 import Konva from 'konva'
 import AnimationQueue from 'ui/AnimationQueue'
@@ -8,7 +8,8 @@ import GridEvents from 'events/GridEvents'
 import PubSub from 'util/PubSub'
 
 const GridWorldUIEvents = {
-  agentDragged: Symbol('grid-world-ui-event-agent-dragged')
+  agentDragged: Symbol('grid-world-ui-event-agent-dragged'),
+  cycleCellState: Symbol('grid-world-ui-event-cycle-cell-state')
 }
 
 class GridWorldUI {
@@ -74,12 +75,17 @@ class GridWorldUI {
       for (let x = 0; x < worldRow.length; x++) {
         let worldCell = worldRow[x]
         let cellUi = new CellUI(this.cellLayer, this.animationQueue, worldCell)
+        cellUi.pubSub.addSubscriber(CellUIEvenets.cycleState, this.onCellCycleState.bind(this, worldCell))
         uiRow.push(cellUi)
       }
       gridUi.push(uiRow)
     }
     this.gridUi = gridUi
     this.render()
+  }
+
+  onCellCycleState (cell) {
+    this.pubSub.notifySubscribers(GridWorldUIEvents.cycleCellState, cell)
   }
 
   updateGridSize (gridSize) {

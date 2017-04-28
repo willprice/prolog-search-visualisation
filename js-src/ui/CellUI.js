@@ -2,18 +2,30 @@
 import { CELL_UI_CONFIG } from 'ui/gridConfig'
 import Konva from 'konva'
 import CellEvents from 'events/CellEvents'
+import PubSub from 'util/PubSub'
 import promisify from 'util/promises'
+import log from 'util/log'
+
+const CellUIEvents = {
+  cycleState: Symbol('cell-ui-event-state-change')
+}
+const DEBUG_TOPIC = 'CellUI'
 
 class CellUI {
   constructor (layer, animationQueue, cell) {
     this.cell = cell
     this.animationQueue = animationQueue
+    this.pubSub = new PubSub(CellUIEvents)
     this.cell.pubSub.addSubscriber(CellEvents.stateChange, promisify(this.cellUpdateNotification.bind(this)))
     this.layer = layer
     this.rect = this.render()
+    this.rendered = false
   }
 
   render () {
+    if (this.rendered) {
+      return this.rect
+    }
     let width = CELL_UI_CONFIG.size
     let height = CELL_UI_CONFIG.size
 
@@ -29,7 +41,12 @@ class CellUI {
       stroke: CELL_UI_CONFIG.strokeColor,
       strokeWidth: CELL_UI_CONFIG.strokeWidth
     })
+    rect.on('click tap', () => {
+      log(DEBUG_TOPIC, 'Clicked cell: ', this.cell.position)
+      this.pubSub.notifySubscribers(CellUIEvents.cycleState)
+    })
     this.layer.add(rect)
+    this.rendered = true
     return rect
   }
 
@@ -74,9 +91,12 @@ class CellUI {
     })
   }
 
-  cellUpdateNotification () {
-    this.update()
+  cellUpdateNotification (state) {
+    log(DEBUG_TOPIC, 'Cell UI updating ', this.cell.position, state)
+    this.rect.fill(CELL_UI_CONFIG.color[state])
+    this.rect.draw()
   }
 }
 
+export { CellUI, CellUIEvents }
 export default CellUI

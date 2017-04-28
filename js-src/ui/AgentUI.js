@@ -4,10 +4,12 @@ import { CELL_UI_CONFIG, AGENT_UI_CONFIG } from 'ui/gridConfig'
 import AgentEvents from 'events/AgentEvents'
 import promisify from 'util/promises'
 import PubSub from 'util/PubSub'
+import log from 'util/log'
 
 const AgentUIEvents = Object.freeze({
   dragged: Symbol('agent-ui-event-dragged')
 })
+const DEBUG_TOPIC = 'AgentUI'
 
 class AgentUI {
   constructor (layer, animationQueue, agent) {
@@ -21,7 +23,6 @@ class AgentUI {
     this.agent.pubSub.addSubscriber(AgentEvents.reset, this.immediatelyUpdatePosition.bind(this))
     this.agent.pubSub.addSubscriber(AgentEvents.backtrack, promisify(this.agentUpdateNotification.bind(this)))
     this.circle = this.render()
-    this.animatationInProgress = false
   }
 
   agentUpdateNotification () {
@@ -29,7 +30,7 @@ class AgentUI {
   }
 
   immediatelyUpdatePosition () {
-    console.log('Updating position')
+    log(DEBUG_TOPIC, 'Updating agent position')
     this.circle.x(this._xFromAgent())
     this.circle.y(this._yFromAgent())
     this.layer.draw()

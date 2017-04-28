@@ -2,12 +2,13 @@
 import Path from './Path'
 import AgentEvents from 'events/AgentEvents'
 import PubSub from 'util/PubSub'
+import { p } from './Position'
 
 class Agent {
   constructor (position) {
     this._position = position
     this._start = position
-    this._goal = undefined
+    this._goal = p(1, 1)
     this.pubSub = new PubSub(AgentEvents)
     this.world = null
     this.previousPath = new Path([])
@@ -33,8 +34,9 @@ class Agent {
   }
 
   set goal (position) {
+    let oldGoal = this._goal
     this._goal = position
-    this.pubSub.notifySubscribers(AgentEvents.goalPositionChanged, this._goal)
+    this.pubSub.notifySubscribers(AgentEvents.goalPositionChanged, oldGoal, this._goal)
   }
 
   get goal () {

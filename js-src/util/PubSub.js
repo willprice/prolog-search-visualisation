@@ -20,10 +20,10 @@ class PubSub {
 
   // The pile of hell fire that is the promisification of the PubSub class is thanks to Konva's lake of synchronous
   // animations.
-  notifySubscribers (event, data) {
+  notifySubscribers (event, ...args) {
     let promises = []
     for (let subscriber of this.subscribers[event]) {
-      promises.push(subscriber(data))
+      promises.push(subscriber(...args))
     }
     return Promise.all(promises)
   }

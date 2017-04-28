@@ -2,12 +2,12 @@
 import CellEvents from 'events/CellEvents'
 import PubSub from 'util/PubSub'
 
-const CellStates = Object.freeze({
+const CellStates = {
   default: Symbol('cell-state-default'),
   visited: Symbol('cell-state-visited'),
-  goal: Symbol('cell-state-visited'),
+  goal: Symbol('cell-state-goal'),
   start: Symbol('cell-state-start')
-})
+}
 
 class Cell {
   constructor (position) {
@@ -17,12 +17,19 @@ class Cell {
   }
 
   visited () {
-    this.state = CellStates.visited
-    this.pubSub.notifySubscribers(CellEvents.stateChange, this.state)
+    this._updateState(CellStates.visited)
   }
 
   reset () {
-    this.state = CellStates.default
+    this._updateState(CellStates.default)
+  }
+
+  goal () {
+    this._updateState(CellStates.goal)
+  }
+
+  _updateState (state) {
+    this.state = state
     this.pubSub.notifySubscribers(CellEvents.stateChange, this.state)
   }
 

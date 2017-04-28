@@ -1,5 +1,5 @@
 'use strict'
-import { Cell, CellStates } from 'model/Cell'
+import Cell from 'model/Cell'
 import Position, { p } from 'model/Position'
 import Agent from 'model/Agent'
 import GridSearchAPI from 'GridSearchAPI'
@@ -7,6 +7,7 @@ import log from 'util/log'
 import Path from 'model/Path'
 import GridEvents from 'events/GridEvents'
 import PubSub from 'util/PubSub'
+import AgentEvents from 'events/AgentEvents'
 
 const DEBUG_TOPIC = 'GridWorld'
 
@@ -21,11 +22,18 @@ class GridWorld {
       width: 4,
       height: 4
     }
-    this.agent = new Agent(p(1, 1))
     this.state = GridWorldState.setup
     this.pubSub = new PubSub(GridEvents)
     this.gridSize = this._gridSize
+    this.agent = new Agent(p(1, 1))
+    this.agent.pubSub.addSubscriber(AgentEvents.goalPositionChanged, this.onSetGoalPosition.bind(this))
     this.searchApi = new GridSearchAPI('ws://localhost:4000/api')
+  }
+
+  onSetGoalPosition (oldGoalPosition, newGoalPosition) {
+    this.cell(oldGoalPosition).reset()
+    this.cell(newGoalPosition).goal()
+    return new Promise((resolve) => resolve())
   }
 
   set gridSize (gridSize) {
@@ -43,7 +51,8 @@ class GridWorld {
     return this.searchApi.setupConnection().then(() => {
       return this.searchApi.setupGrid({
         size: this._gridSize,
-        start: this.agent.startPosition
+        start: this.agent.startPosition,
+        goal: this.agent.goal
 
       })
     }).then(() => {
@@ -96,14 +105,6 @@ class GridWorld {
 
   cell (position) {
     return this.grid[position.y - 1][position.x - 1]
-  }
-
-  set start (position) {
-    this.cell(position).state = CellStates.start
-  }
-
-  set goal (position) {
-    this.cell(position).state = CellStates.goal
   }
 
   searchResponseCallback (response) {
