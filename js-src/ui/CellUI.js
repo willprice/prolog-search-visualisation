@@ -19,7 +19,16 @@ class CellUI {
     this.cell.pubSub.addSubscriber(CellEvents.stateChange, promisify(this.cellUpdateNotification.bind(this)))
     this.layer = layer
     this.rect = this.render()
+    this.interactable = true
     this.rendered = false
+  }
+
+  disableInteractions () {
+    this.interactable = false
+  }
+
+  enableInteractions () {
+    this.interactable = true
   }
 
   render () {
@@ -42,8 +51,10 @@ class CellUI {
       strokeWidth: CELL_UI_CONFIG.strokeWidth
     })
     rect.on('click tap', () => {
-      log(DEBUG_TOPIC, 'Clicked cell: ', this.cell.position)
-      this.pubSub.notifySubscribers(CellUIEvents.cycleState)
+      if (this.interactable) {
+        log(DEBUG_TOPIC, 'Clicked cell: ', this.cell.position)
+        this.pubSub.notifySubscribers(CellUIEvents.cycleState)
+      }
     })
     this.layer.add(rect)
     this.rendered = true

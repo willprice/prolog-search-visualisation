@@ -2,6 +2,7 @@
 import Cell from 'model/Cell'
 import Position, { p } from 'model/Position'
 import Agent from 'model/Agent'
+import { SearchEvents } from 'SearchAPI'
 import GridSearchAPI from 'GridSearchAPI'
 import log from 'util/log'
 import Path from 'model/Path'
@@ -13,7 +14,9 @@ const DEBUG_TOPIC = 'GridWorld'
 
 const GridWorldState = {
   setup: Symbol('grid-world-state-setup'),
-  searching: Symbol('grid-world-state-searching')
+  searching: Symbol('grid-world-state-searching'),
+  searchComplete: Symbol('grid-world-search-complete')
+
 }
 
 class GridWorld {
@@ -28,6 +31,16 @@ class GridWorld {
     this.agent = new Agent(p(1, 1))
     this.agent.pubSub.addSubscriber(AgentEvents.goalPositionChanged, this.onSetGoalPosition.bind(this))
     this.searchApi = new GridSearchAPI('ws://localhost:4000/api')
+    this.searchApi.pubSub.addSubscriber(SearchEvents.searchComplete, this.onSearchComplete.bind(this))
+  }
+
+  onSearchComplete (response) {
+    return new Promise((resolve) => {
+      log(DEBUG_TOPIC, 'Search complete')
+      log(DEBUG_TOPIC, response)
+      this.state = GridWorldState.searchComplete
+      this.pubSub.notifySubscribers(GridEvents.searchComplete).then(resolve)
+    })
   }
 
   onSetGoalPosition (oldGoalPosition, newGoalPosition) {
@@ -53,7 +66,6 @@ class GridWorld {
         size: this._gridSize,
         start: this.agent.startPosition,
         goal: this.agent.goal
-
       })
     }).then(() => {
       log(DEBUG_TOPIC, 'Initialising search')
@@ -83,12 +95,11 @@ class GridWorld {
   }
 
   reset () {
+    this._resetState()
     if (this.state === GridWorldState.searching) {
       return this.searchApi.reset().then(() => {
-        this._resetState()
       })
     } else {
-      this._resetState()
       return new Promise((resolve) => resolve())
     }
   }

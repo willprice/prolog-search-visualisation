@@ -2,13 +2,19 @@
 /* global WebSocket */
 
 import log from 'util/log'
+import PubSub from './util/PubSub'
 
 const LOG_TOPIC = 'SearchApi'
+
+const SearchEvents = {
+  searchComplete: Symbol('search-api-search-complete')
+}
 
 class SearchAPI {
   constructor (rootUrl) {
     this.rootUrl = rootUrl
     this.connection = null
+    this.pubSub = new PubSub(SearchEvents)
     this._nextMessageId = 0
     this.awaitingResponse = new Map()
   }
@@ -43,6 +49,9 @@ class SearchAPI {
       if (callback !== undefined) {
         log(LOG_TOPIC, `Running callback for message ${payload.id}`)
         callback(payload)
+      }
+      if (payload.response === 'search_complete') {
+        this.pubSub.notifySubscribers(SearchEvents.searchComplete, payload)
       }
     } catch (error) {
       if (error instanceof SyntaxError) {
@@ -86,4 +95,5 @@ class SearchAPI {
   }
 }
 
+export { SearchAPI, SearchEvents }
 export default SearchAPI

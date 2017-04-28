@@ -106,6 +106,16 @@ class GridWorldUI {
       }
     }
   }
+  enableCellInteractions () {
+    this.forEachCell((cell) => {
+      cell.enableInteractions()
+    })
+  }
+  disableCellInteractions () {
+    this.forEachCell((cell) => {
+      cell.disableInteractions()
+    })
+  }
 
   render () {
     this.forEachCell((cell) => cell.render())

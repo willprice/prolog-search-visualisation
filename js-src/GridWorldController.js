@@ -1,5 +1,6 @@
 import GridParameterControls from 'ui/controls/GridParameterControls'
 import GridWorld from 'model/GridWorld'
+import GridEvents from 'events/GridEvents'
 import { GridWorldUI, GridWorldUIEvents } from 'ui/GridWorldUI'
 import { CellStates } from 'model/Cell'
 import { p } from 'model/Position'
@@ -16,16 +17,26 @@ class GridWorldController {
     this.gridWorldUI.pubSub.addSubscriber(GridWorldUIEvents.agentDragged, this.moveAgentToCell.bind(this))
     this.gridWorldUI.pubSub.addSubscriber(GridWorldUIEvents.cycleCellState, this.onCycleCellState.bind(this))
     this.gridParameterControls.addStartSubscriber(this.onStart.bind(this))
-    this.gridParameterControls.addStepSubscriber(this.gridWorld.step.bind(this.gridWorld))
+    this.gridParameterControls.addStepSubscriber(this.onStep.bind(this))
     this.gridParameterControls.addResetSubscriber(this.onReset.bind(this))
     this.gridParameterControls.addGridSizeSubscriber(this.onGridSizeChange.bind(this))
+    this.gridWorld.pubSub.addSubscriber(GridEvents.searchComplete, this.onSearchComplete.bind(this))
   }
 
   onStart () {
     return new Promise((resolve) => {
       this.gridWorld.startSearch().then(() => {
         this.enableSearchControls()
+        this.gridWorldUI.disableCellInteractions()
       }).then(resolve)
+    })
+  }
+
+  onStep () {
+    return new Promise((resolve) => {
+      this.gridWorld.step().then((response) => {
+        resolve()
+      })
     })
   }
 
@@ -45,7 +56,15 @@ class GridWorldController {
   onReset () {
     return new Promise((resolve) => {
       this.disableSearchControls()
+      this.gridWorldUI.enableCellInteractions()
       this.gridWorld.reset().then(resolve)
+    })
+  }
+
+  onSearchComplete () {
+    return new Promise((resolve) => {
+      this.disableStepControl()
+      resolve()
     })
   }
 
@@ -63,6 +82,10 @@ class GridWorldController {
     this.gridParameterControls.startButton.enable()
     this.gridParameterControls.stepButton.disable()
     this.gridParameterControls.resetButton.disable()
+  }
+
+  disableStepControl () {
+    this.gridParameterControls.stepButton.disable()
   }
 
   onGridSizeChange () {
