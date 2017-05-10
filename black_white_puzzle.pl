@@ -84,6 +84,23 @@ black_left_of_white(Board, Value):-
                     BlackPosition #< WhitePosition), BlacksLeftOfWhite),
     length(BlacksLeftOfWhite, Value).
 
+display_path([move(BeforeState, AfterState, _Cost)]) :-
+    display_board(BeforeState),
+    display_board(AfterState).
+display_path([move(BeforeState, _AfterState, _Cost)|Tail]) :-
+    display_board(BeforeState),
+    display_path(Tail).
+
+display_board(initial_board).
+display_board([]) :-
+    format('~n', []).
+display_board([Piece|Rest]) :-
+    (Piece = black -> Symbol = '●'
+    ;Piece = white -> Symbol = '○'
+    ;Piece = empty -> Symbol = '␣'),
+    format('~p', [Symbol]),
+    display_board(Rest).
+
 %out_of_place(_Board, 8, N, N).
 %out_of_place(Board, K, N0, N):-
 %    K #< 8, K1 #= K + 1,
