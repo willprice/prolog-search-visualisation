@@ -1,6 +1,6 @@
 # Search Visualisation in Prolog
 
-[![Build Status](https://travis-ci.org/willprice/prolog-search-visualisation.svg?branch=master)](https://travis-ci.org/willprice/prolog-search-visualisation)
+[![Build Status](https://travis-ci.org/willprice/prolog-search-visualisation.svg?branch=master)](https://travis-ci.org/willprice/prolog-search-visualisation) [![Greenkeeper badge](https://badges.greenkeeper.io/willprice/prolog-search-visualisation.svg)](https://greenkeeper.io/)
 
 [SWI-Prolog](http://www.swi-prolog.org/) based tracer for visualisation search
 algorithms such as depth first, breadth first, best first, A*, ... search
